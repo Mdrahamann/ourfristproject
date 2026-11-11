@@ -65,6 +65,8 @@ for x in top_vol:
 losers = sorted([x for x in crypto if not liq_reason(x)], key=lambda x: x['price_percentage_change_24h'])[:5]
 for x in gainers + losers:                      # L2: top-20 volume + top-5 gainers + top-5 losers, cap 30
     if x not in short and len(short) < 30: short.append(x)
+for x in sorted([x for x in crypto if not liq_reason(x)], key=lambda x: -x['volume_24h']):
+    if x not in short and len(short) < 20: short.append(x)   # fill to 20 with remaining liquid contracts when available
 
 # ---------------- candles ----------------
 def yahoo(sym, interval, rng, sec):
@@ -232,6 +234,11 @@ for x in short:
             f = next((z for z in fv if z['t'] == dt_), None) or max(fv, key=lambda z: z['hi'] - z['lo'])
             out['fvg'] = dict(lo=f['lo'], hi=f['hi'], mid_t=ukd(f['t']), known_at=ukd(f['known_at']),
                               touched=ukd(f['touched']) if f['touched'] else None)
+            out['expiry'] = ukd(f['known_at'] + 16 * 900)            # E2 [PROPOSED]: 16 x 15m after the FVG became known
+            out['expired'] = NOW > f['known_at'] + 16 * 900
+            kk = 'H' if s['dir'] == 'bull' else 'L'                  # C2: last confirmed 5m swing (current reference)
+            ref = max((w for w in r5['swings'] if w['kind'] == kk and w['known_at'] <= NOW), key=lambda w: w['known_at'], default=None)
+            out['trigger_ref'] = dict(price=ref['price'], swing_t=ukd(ref['t']), known_at=ukd(ref['known_at'])) if ref else None
             buf = max(0.001 * f['hi'], 0.25 * a15)
             stop = sw['extreme'] + buf if s['dir'] == 'bear' else sw['extreme'] - buf
             entry = (f['lo'] + f['hi']) / 2
@@ -284,7 +291,7 @@ for x in short:
         opp = next((e for e in r15['events'] if e['ev'] in ('BOS', 'CHoCH') and e['dir'] != s['dir'] and s['brk'] and e['t'] > s['brk']['t']), None)
         out['conflict'] = f"opposite 15m {opp['ev']} {opp['dir']} @ {opp['level']:.6g} on {ukd(opp['t'])}" if opp else None
         out['status'] = ('Invalidated' if s['invalidated'] else
-                         ('Watch (conflict)' if opp else 'Watch (zone distant)' if out.get('dist_atr1h', 0) > 3 else 'Candidate') if complete else 'Watch')
+                         ('Watch (conflict)' if opp else 'Expired' if out.get('expired') else 'Watch (zone distant)' if out.get('dist_atr1h', 0) > 3 else 'Candidate') if complete else 'Watch')
         bias1h = item['ctx1h']['bias']
         out['group'] = 'main (1H aligned)' if bias1h == s['dir'] else 'countertrend (half risk, separate paper group)'
         out['missing'] = [n for n, v in (('BOS/CHoCH', s['brk']), ('displacement', s['disp']), ('unfilled FVG', out['fvg'])) if not v]
