@@ -215,3 +215,53 @@ Otherwise the result is WAIT FOR TRIGGER, MISSED (window or fill passed), or "RE
 Order blocks, breakers, premium/discount, VWAP and volume confirmation, and the "extended candle / 24h extreme" filter.
 Proposal for the last one: skip a long if price is within 0.25×ATR(1H) of the 24h high (mirror for shorts). `[PROPOSED]`
 Until these are defined they are **excluded from automated checks**.
+
+### 18. Two plans on every `scan now` `[LOCKED 11 Nov]`
+**Every scan output starts with these four rows**, before anything else:
+
+| Row | Content |
+|---|---|
+| Plan A, Longs | Best qualifying setup, or `No qualifying setup` plus a short reason |
+| Plan A, Shorts | Same |
+| Plan B, Longs | Same |
+| Plan B, Shorts | Same |
+
+**Countertrend rows:** any qualifying countertrend paper setup appears in its **own row** under its plan, at **half risk**. When the 1H trend is bearish on most coins, the scan explicitly checks Plan A **bearish continuation shorts** (main group) **and countertrend longs**, and always prints the countertrend-longs row. The same applies in mirror when the 1H is mostly bullish.
+
+**Plan A: 15m setup, 5m confirmation** (your original scalp)
+- **Setup:** §3–§8 on 15m. A sweep, then a strong candle plus a structure break within 16 bars, then an unfilled 15m price gap that is the retest zone. Lookback is 24 hours.
+- **Confirmation (C2):** after the retest, a **fully closed 5m candle beyond the last confirmed 5m swing** (high for a long, low for a short). Only swings confirmed before that candle opened count.
+- **Trend:** 1H context. A 1H-aligned setup is main group; otherwise it goes in the countertrend row at half risk.
+- **READY NOW window:** 5 minutes from the confirming close `[PROPOSED]`.
+- **Plan expiry:** 16 × 15m bars after the price gap became known `[PROPOSED]`.
+
+**Plan B: 1H setup, 15m confirmation** (separate plan)
+- **Setup:** the same rules on 1H. Swings use N=3, the sequence window is 16 1H bars, and lookback is 72 hours. Zone = the 1H price gap.
+- **Stop:** 1H sweep extreme ∓ max(0.10%, 0.25×ATR14 on 1H).
+- **Targets:** untaken 1H swings, capped at the near edge of an opposing unfilled 1H price gap.
+- **Confirmation:** after the retest, a **fully closed 15m candle beyond the last confirmed 15m swing** in the trade direction.
+- **Trend:** 4H context. A 4H-aligned setup is main group; a countertrend setup gets half risk in its own row `[PROPOSED]`.
+- **READY NOW window:** 15 minutes from the confirming 15m close `[PROPOSED]`.
+- **Plan expiry:** 16 × 1H bars after the 1H price gap became known `[PROPOSED]`.
+- **Invalidation:** a 1H close beyond the sweep extreme, an opposite 1H break, TP1 reached before entry, or the zone filled before confirmation.
+
+**Both plans** keep the L1/L3 liquidity, N1–N6 news, R1–R4 risk and **2:1 net** rules unchanged. Every row shows:
+- entry range (zone edge → **worst acceptable fill**)
+- exact confirmation level
+- stop, TP1/TP2, net R, expiry, invalidation and alert level
+
+**Confirmation level vs worst fill:**
+- If the current confirmation level is beyond the worst fill (for example, a long that must close above 3.6972 when the maximum entry is 3.5910), the plan needs **either a fresh pullback to the worst fill after confirmation, or a new, lower swing (higher swing for a short) to confirm against**.
+- If neither happens within the READY NOW window, the setup is **MISSED**.
+
+**Statuses:**
+| Status | Meaning |
+|---|---|
+| `READY NOW` | Only with the exact Binance contract's closed candles **and** a fresh bid/ask (§16) |
+| `CONFIRMED` | Inside the entry window, but the data is a proxy (paper only) |
+| `WAIT FOR TRIGGER` | Zone not touched yet |
+| `WAIT FOR TRIGGER (in zone)` | Zone touched, confirmation not closed yet |
+| `MISSED` | Entry window passed, worst fill passed, or TP1 reached before entry |
+| `Expired`, `Conflict`, `Zone filled`, `Fails 2:1 net`, `Invalidated`, `Watch` | Setup no longer valid or incomplete |
+
+**Proxy data** (Yahoo spot candles, CoinGecko snapshots): every level is labelled **approximate**, setups stay on the **paper watchlist**, and the scan prints "READY NOW unavailable — live contract data missing".

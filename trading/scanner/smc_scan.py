@@ -19,6 +19,8 @@ Rules (all on CLOSED candles only):
 import json, os, sys, time, urllib.request, datetime as dt
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from smc_core import worst_fill  # noqa: E402
+from plans import find_setups, render  # noqa: E402
+PLAN_SETUPS = []
 from zoneinfo import ZoneInfo
 
 UK = ZoneInfo('Europe/London'); UTC = dt.timezone.utc
@@ -220,6 +222,11 @@ for x in short:
         item['status'] = 'UNAVAILABLE: stale/missing data: ' + '; '.join(stale); report['symbols'].append(item); continue
     item['ctx4h'] = htf_context(h4, 2, 14400); item['ctx1h'] = htf_context(h1, 3, 3600)
     r15 = analyse(m15, 2, 900); r5 = analyse(m5, 2, 300); a15 = r15['atr'][-1]
+    hs_ = (x.get('spread') or 0.02) / 200
+    costs_ = (FEE_TAKER + hs_ + SLIPPAGE, FEE_TAKER + hs_, FEE_TAKER + hs_ + SLIPPAGE)
+    for pl, S_, C_, cdir in (('A', m15, m5, item['ctx1h']['bias']), ('B', h1, m15, item['ctx4h']['bias'])):
+        for rr in find_setups(pl, S_, C_, cdir, m15[-1][4], costs_, NOW):
+            rr['sym'] = x['symbol']; PLAN_SETUPS.append(rr)
     item['atr15'] = a15; item['last15'] = m15[-1][4]
     seqs = []
     for s in setup_15m(r15, m15, r5, m5, 900):
@@ -301,7 +308,16 @@ for x in short:
     item['recent15'] = [e | {'t_uk': ukd(e['t'])} for e in r15['events'][-12:]]
     report['symbols'].append(item)
 
+okk = [it for it in report['symbols'] if it.get('status') == 'ok']
+breadth = dict(n=len(okk), bear=sum(it['ctx1h']['bias'] == 'bear' for it in okk), bull=sum(it['ctx1h']['bias'] == 'bull' for it in okk))
+DATA_LABEL = (f"Yahoo spot candles (proxy for Binance contract candles) + CoinGecko snapshot {report['coingecko_lag_min']} min old. "
+              "All levels APPROXIMATE, paper watchlist only. READY NOW unavailable: live contract data missing (Binance API HTTP 451)")
+FOUR_ROWS = render(PLAN_SETUPS, breadth, DATA_LABEL, ready_now_ok=False, now=NOW)
+report['plans'] = PLAN_SETUPS; report['four_rows_md'] = FOUR_ROWS
+open(f'{OUT}/scan.md', 'w').write(f"# Scan {report['scan_time_uk']}\n\n" + FOUR_ROWS + "\n")
 json.dump(report, open(f'{OUT}/scan.json', 'w'), indent=1, default=str)
+print(FOUR_ROWS)
+print()
 print('scan', report['scan_time_uk'], '| CoinGecko as of', report['coingecko_asof_uk'], f"({report['coingecko_lag_min']} min old)")
 print('rejected (top-20 volume, failed liquidity):', ', '.join(f"{r['sym']} [{'; '.join(r['why'])}]" for r in report['rejected_top_volume']))
 for it in report['symbols']:
