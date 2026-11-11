@@ -1,0 +1,1 @@
+alert_id,issued_uk,symbol,product,direction,group,confirm_tf,confirm_close_uk,confirm_close,confirmed_level,quote_side_price,quote_source,quote_time_uk,quote_age_s,entry_low,entry_high,worst_fill,stop,tp1,tp2,netR_tp1,netR_tp2,expires_uk,news,delivered_uk,fillable_at_delivery,notes

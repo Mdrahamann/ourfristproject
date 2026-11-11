@@ -1,0 +1,1 @@
+trade_id,alert_id,group,symbol,direction,entry_uk,entry_price,fill_type(actual|estimated),qty,notional_usd,risk_usd,stop,tp1,tp2,exit_uk,exit_price,exit_reason,fees_usd,slippage_usd,spread_usd,funding_usd,net_usd,net_R,ambiguous,notes

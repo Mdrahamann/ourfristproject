@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-## Trading analyst rules: DRAFT v0.1 (11 Nov 2026), not yet approved
+## Trading analyst rules: v0.2 (11 Nov 2026). Decisions locked; thresholds are still PROVISIONAL
 
 Read-only ICT/SMC analyst for Binance USDⓈ-M perpetuals (crypto and stock/ETF-linked).
 **Never place orders.** Paper trading and journalling only.
@@ -14,6 +14,45 @@ All times are UK time (`Europe/London`, which handles GMT and BST).
 | `[SCANNER]` | Already coded in `trading/scanner/smc_scan.py` |
 | `[PROPOSED]` | A threshold I am proposing. **Needs your approval** |
 | `[UNRESOLVED]` | I cannot infer it from your system. **Needs your decision** |
+
+### Decisions locked on 11 Nov 2026 (v0.2). These override anything below
+1. **Capital first.**
+   - Risk up to **0.25% of the starting account balance** per trade (main group), or **0.125%** (countertrend group).
+   - Maximum simulated position **$1,000 notional, leverage included**.
+   - Size = risk ÷ (stop distance + estimated costs per unit).
+   - If the minimum order size would exceed the risk limit, **skip the setup**.
+   - **Never increase size** to recover a loss or to reach a daily goal.
+   - **Balance and fee rates come from the user.** Until then, $ figures use a labelled placeholder balance.
+2. **Session stop (paper):** stop for the UK day after **2 losing trades** or a **−0.5% drop from the starting session balance**, whichever comes first.
+3. **B2:** the main strategy requires **1H alignment**. Countertrend 15m setups go to a **separate paper group at half risk**, so the two can be compared.
+4. **C2 (canonical trigger):** after the planned retest, a **fully closed 5m candle beyond the last confirmed 5m swing** (high for a long, low for a short). Only swings already confirmed before that candle opened count.
+5. **READY NOW** needs that candle already closed **and** a fresh quote for the exact contract inside the entry range (§16). Usual conditional plans still apply.
+6. **Thresholds stay `[PROPOSED]`.** Before any threshold is called validated, show for the development period and for a later untouched period:
+   - sample size
+   - net results after costs
+   - maximum drawdown
+7. **News (N1):**
+   - No new paper entries from **T−15 to T+30 minutes** around major scheduled events that affect the setup.
+   - For stock-linked contracts, **company earnings** count as such an event.
+   - Show the source and UK time for each event.
+   - If the spread is still outside the filter after the window, keep waiting.
+8. **Stock-linked contracts:**
+   - OI ≥ $20M is **provisional**.
+   - Also check spread, recent volume and **order-book depth on the exact contract**.
+   - Skip the setup if the position would be hard to fill within the entry range.
+   - If depth can't be checked, mark the setup **unverified**: no READY NOW.
+9. **Fees:**
+   - Fee tier is unconfirmed, so **ask the user** for the maker/taker rates on USDⓈ-M Futures.
+   - Until then, use a **labelled taker-fee estimate (0.05%) on both entry and exit**, plus spread, slippage and funding where applicable.
+10. **Data:**
+    - **No remote access** to the user's computer or account. Public, read-only market data only.
+    - If the exact contract's quote and closed candles can't be verified, show **conditional plans only**.
+11. **Daily goal tracking:**
+    - Report how often a day ends with **$20–$30 net**, and with **≥ $20 net**.
+    - A zero-trade day is a valid day.
+    - The journal also reports:
+      - how often a scan found a valid entry
+      - how often a READY NOW alert was still fillable when it arrived
 
 **Where the examples come from:** the 10–11 Nov scans. They use Yahoo spot candles as a stand-in for the Binance contract, unless marked otherwise.
 
@@ -51,7 +90,7 @@ All times are UK time (`Europe/London`, which handles GMT and BST).
 
 ### 2. Higher-timeframe bias
 - **B1 Bias** = direction of the last confirmed BOS/CHoCH (by candle close). Swings use N=2 on 4H and N=3 on 1H. `[SCANNER]`
-- **B2 Gating** `[UNRESOLVED]`. Proposal `[PROPOSED]`:
+- **B2 Gating** `[LOCKED v0.2]`: the main strategy requires 1H alignment; countertrend setups go to a separate half-risk paper group. Earlier proposal, kept for reference:
   - A 15m setup that agrees with the 1H bias gets full risk.
   - A setup against the 1H bias gets half risk at most, and only if the 4H isn't in the same direction as the 1H.
   - PASS: a short when 1H = bear.
@@ -99,14 +138,14 @@ All times are UK time (`Europe/London`, which handles GMT and BST).
 ### 9. Retest and confirmation
 - **C1 Zone touch:** a 5m bar trades into the FVG.
 - **C2 Confirmation:** after the touch, a **5m close beyond the latest confirmed 5m swing** in the trade direction (a 5m BOS/CHoCH). `[SCANNER]`
-  - `[UNRESOLVED]`: in our sessions I also used "red/green 5m close back inside the zone" and "15m close back above the zone". **Choose one canonical trigger per setup type.**
+  - `[LOCKED v0.2]`: this is the only trigger. The other variants used in chat ("red/green 5m close back inside the zone", "15m close back above the zone") are retired.
 - **C3** Confirmation must come within 12 × 5m bars (60 minutes) of the first touch, or the setup goes back to Watch. `[PROPOSED]`
   - PASS: PEPE long on 11 Nov. Zone touched 00:30, 5m BOS close 0.00548 at 01:25 (then it failed the R:R gate).
   - FAIL: BTC short on 10 Nov. Zone touched 16:15, 5m CHoCH only at 19:10, more than 60 minutes later.
 
 ### 10. Entry range and worst acceptable fill
 Costs `[PROPOSED]`, unless your fee tier is different:
-- Taker fee f_t = 0.05%; maker fee f_m = 0.02%
+- Taker fee f_t = 0.05% **ESTIMATE, applied to entry and every exit** (v0.2; fee tier unconfirmed); maker fee not used until confirmed
 - Stop slippage s = 0.02%
 - Entry at the **ask (long) or bid (short)**, so the spread is already paid and is **not added again**
 - TP exits are limit (maker) orders; stop exits are market (taker) orders with slippage
@@ -161,7 +200,7 @@ Costs `[PROPOSED]`, unless your fee tier is different:
 - **R1** Risk 0.25% per trade `[EXISTING]`. Half size (0.125%) after shock events `[SESSION]`; when to go back to full size is `[UNRESOLVED]`.
 - **R2** At most 1 long and 1 short open at once; correlated positions count as combined risk. `[SESSION]`, `[EXISTING]`
 - **R3** Net R:R ≥ 2.0 to the main target. Refuse rather than shrink. A failed gate is final. `[EXISTING]`
-- **R4** End the session after 3 consecutive losses or a −1% account loss. `[EXISTING]` My "stop after 2 losses" suggestion on 10 Nov was advice, not a rule. **Conflict: please confirm.**
+- **R4** `[LOCKED v0.2]` Paper session stop: **2 losing trades or −0.5% from the starting session balance** (UK day). This is tighter than the skill's 3 losses / −1%.
 
 ### 16. READY NOW gate (all must pass)
 1. ST1 Candidate, with C2 confirmation closed **on the exact Binance contract** (TF, close time, close price, level).

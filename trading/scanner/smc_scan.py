@@ -17,6 +17,8 @@ Rules (all on CLOSED candles only):
     Anything less is Watch. 5m confirmation = a 5m BOS/CHoCH in the trade direction after the zone is touched.
 """
 import json, os, sys, time, urllib.request, datetime as dt
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from smc_core import worst_fill  # noqa: E402
 from zoneinfo import ZoneInfo
 
 UK = ZoneInfo('Europe/London'); UTC = dt.timezone.utc
@@ -60,8 +62,9 @@ gainers = sorted([x for x in crypto if not liq_reason(x)], key=lambda x: -x['pri
 short, rejected = [], []
 for x in top_vol:
     (rejected if liq_reason(x) else short).append(x)
-for x in gainers:
-    if x not in short: short.append(x)
+losers = sorted([x for x in crypto if not liq_reason(x)], key=lambda x: x['price_percentage_change_24h'])[:5]
+for x in gainers + losers:                      # L2: top-20 volume + top-5 gainers + top-5 losers, cap 30
+    if x not in short and len(short) < 30: short.append(x)
 
 # ---------------- candles ----------------
 def yahoo(sym, interval, rng, sec):
@@ -247,14 +250,29 @@ for x in short:
             else:
                 pool = [v for v in untaken(r15['swings'], m15, 'H') + untaken(swings(h1, 3, 3600), h1, 'H') if v > max(entry, item['last15'])]
                 tg = sorted(set(pool))
-            spread = (x.get('spread') or 0) / 100
-            cost = entry * (2 * FEE_TAKER + 2 * SLIPPAGE + spread)
+            # T2 [PROPOSED]: cap targets at the near edge of an unfilled opposing 15m FVG
+            opp = [z for z in r15['fvgs'] if z['dir'] != s['dir'] and not z['filled'] and z['i'] >= len(m15) - 400]
+            if s['dir'] == 'bull':
+                caps = [z['lo'] for z in opp if z['lo'] > f['hi']]
+                if caps: tg = sorted(set(min(v, min(caps)) for v in tg))
+            else:
+                caps = [z['hi'] for z in opp if z['hi'] < f['lo']]
+                if caps: tg = sorted(set(max(v, max(caps)) for v in tg), reverse=True)
+            # v0.2 cost model (CLAUDE.md §10): spread counted once; taker ESTIMATE on entry and exit
+            hs = (x.get('spread') or 0) / 200
+            c_e = FEE_TAKER + hs + SLIPPAGE; c_tp = FEE_TAKER + hs; c_s = FEE_TAKER + hs + SLIPPAGE
             risk = abs(stop - entry)
-            out.update(entry_ce=entry, stop=stop, risk_pct=round(100 * risk / entry, 3), cost_R=round(cost / risk, 3) if risk else None,
+            def netR(tp):
+                if s['dir'] == 'bull':
+                    return round((tp * (1 - c_tp) - entry * (1 + c_e)) / (entry * (1 + c_e) - stop * (1 - c_s)), 2)
+                return round((entry * (1 - c_e) - tp * (1 + c_tp)) / (stop * (1 + c_s) - entry * (1 - c_e)), 2)
+            out.update(entry_ce=entry, stop=stop, risk_pct=round(100 * risk / entry, 3),
+                       cost_R=round(entry * (c_e + c_s) / risk, 3) if risk else None,
                        targets=tg[:2], spread_missing=x.get('spread') is None)
             if tg:
-                out['net_R_t1'] = round((abs(tg[0] - entry) - cost) / (risk + cost), 2)
-                if len(tg) > 1: out['net_R_t2'] = round((abs(tg[1] - entry) - cost) / (risk + cost), 2)
+                out['net_R_t1'] = netR(tg[0])
+                if len(tg) > 1: out['net_R_t2'] = netR(tg[1])
+                out['worst_fill'] = worst_fill(s['dir'], tg[1] if len(tg) > 1 else tg[0], stop, c_e, c_tp, c_s, 2.0)
             a1h = atr(h1)[-1]
             near_edge = f['lo'] if s['dir'] == 'bear' else f['hi']
             out['dist_pct'] = round(100 * (near_edge / item['last15'] - 1), 2)
@@ -267,6 +285,8 @@ for x in short:
         out['conflict'] = f"opposite 15m {opp['ev']} {opp['dir']} @ {opp['level']:.6g} on {ukd(opp['t'])}" if opp else None
         out['status'] = ('Invalidated' if s['invalidated'] else
                          ('Watch (conflict)' if opp else 'Watch (zone distant)' if out.get('dist_atr1h', 0) > 3 else 'Candidate') if complete else 'Watch')
+        bias1h = item['ctx1h']['bias']
+        out['group'] = 'main (1H aligned)' if bias1h == s['dir'] else 'countertrend (half risk, separate paper group)'
         out['missing'] = [n for n, v in (('BOS/CHoCH', s['brk']), ('displacement', s['disp']), ('unfilled FVG', out['fvg'])) if not v]
         seqs.append(out)
     item['seqs'] = seqs; item['status'] = 'ok'
