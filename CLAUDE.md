@@ -216,26 +216,34 @@ Order blocks, breakers, premium/discount, VWAP and volume confirmation, and the 
 Proposal for the last one: skip a long if price is within 0.25×ATR(1H) of the 24h high (mirror for shorts). `[PROPOSED]`
 Until these are defined they are **excluded from automated checks**.
 
-### 18. Two plans on every `scan now` `[LOCKED 11 Nov]`
-**Every scan output starts with these four rows**, before anything else:
+### 18. Two plans on every `scan now` `[LOCKED 11 Nov; order and names updated 11 Nov evening]`
+**Every scan output starts with these four rows, in this order**, before anything else:
 
-| Row | Content |
+| Plan | Direction |
 |---|---|
-| Plan A, Longs | Best qualifying setup, or `No qualifying setup` plus a short reason |
-| Plan A, Shorts | Same |
-| Plan B, Longs | Same |
-| Plan B, Shorts | Same |
+| Original scalp plan — 15m setup, 5m confirmation (main strategy) | Long |
+| Original scalp plan — 15m setup, 5m confirmation (main strategy) | Short |
+| Separate 1H plan — 1H setup, 15m confirmation | Long |
+| Separate 1H plan — 1H setup, 15m confirmation | Short |
 
-**Countertrend rows:** any qualifying countertrend paper setup appears in its **own row** under its plan, at **half risk**. When the 1H trend is bearish on most coins, the scan explicitly checks Plan A **bearish continuation shorts** (main group) **and countertrend longs**, and always prints the countertrend-longs row. The same applies in mirror when the 1H is mostly bullish.
+- Each row shows the best qualifying setup with its conditional entry plan, **including the exact candle close being waited for** (TF, direction, level, and the swing it comes from).
+- **An empty row always says which case it is:**
+  - `Checked N of M: no qualifying setup`, plus the closest setup, its chart evidence (swing, sweep, break, price gap, retest, confirmation close) and the first rule that blocked it, with the value or time; or
+  - `Not evaluated: no usable candle data` (and every contract that couldn't be evaluated is listed under Data).
+- If one plan has no qualifying setup, the other plan's results are still shown. Both directions are checked in both plans on every scan.
+- **The original scalp is computed by the original scanner code, unchanged** (`trading/scanner/scalp_original.py`, moved verbatim from `smc_scan.py` at commit `01d5743`). Status labels and conditional plans are added on top by `scalp_status.py`, using the existing rules R3, SL3, E1, E2 and E3. The separate rewrite used for "Plan A" between 03:26 and 18:00 on 11 Nov is retired.
 
-**Plan A: 15m setup, 5m confirmation** (your original scalp)
+**Countertrend paper group:** setups against the 1H trend (scalp) or the 4H trend (1H plan) are shown in a separate table directly under the four rows, at **half risk**, for both directions of both plans.
+
+**Original scalp plan: 15m setup, 5m confirmation** (main strategy; formerly "Plan A")
 - **Setup:** §3–§8 on 15m. A sweep, then a strong candle plus a structure break within 16 bars, then an unfilled 15m price gap that is the retest zone. Lookback is 24 hours.
 - **Confirmation (C2):** after the retest, a **fully closed 5m candle beyond the last confirmed 5m swing** (high for a long, low for a short). Only swings confirmed before that candle opened count.
-- **Trend:** 1H context. A 1H-aligned setup is main group; otherwise it goes in the countertrend row at half risk.
+- **Trend:** 1H context. A 1H-aligned setup is main group; otherwise it goes in the countertrend table at half risk.
+- **Targets:** untaken 15m **and** 1H swings, nearest first (T1), capped at an opposing unfilled 15m price gap (T2), as the original scanner did.
 - **READY NOW window:** 5 minutes from the confirming close `[PROPOSED]`.
 - **Plan expiry:** 16 × 15m bars after the price gap became known `[PROPOSED]`.
 
-**Plan B: 1H setup, 15m confirmation** (separate plan)
+**Separate 1H plan: 1H setup, 15m confirmation** (additional option; formerly "Plan B")
 - **Setup:** the same rules on 1H. Swings use N=3, the sequence window is 16 1H bars, and lookback is 72 hours. Zone = the 1H price gap.
 - **Stop:** 1H sweep extreme ∓ max(0.10%, 0.25×ATR14 on 1H).
 - **Targets:** untaken 1H swings, capped at the near edge of an opposing unfilled 1H price gap.

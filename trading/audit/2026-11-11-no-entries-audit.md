@@ -191,3 +191,34 @@
 | Plan B, Longs | SPCXUSDT | Invalidated | sweep 134.5 (swing 20:30, known 17:30) on 14:30 bar, extreme 133.14; no break; strong candle 14:30 |
 | Plan B, Shorts | MSTRUSDT | MISSED (TP1 reached before entry) | sweep 145.3 (swing 19:30, known 16:30) on 14:30 bar, extreme 146.045; CHoCH 134.466 close 129.683 @14:30; strong candle 14:30; gap 132.14-141.68, no retest; worst fill 137.565, net R mid-zone 1.81 |
 
+
+---
+
+## Addendum, 20:05 UK: did the 1H-plan change alter the original scalp?
+
+**CLAUDE.md:** no. Commit `3d7a2ff` (03:26) only added §18; §0–§17 were untouched. The v0.2 decisions (commit `4e7dbed`) are the user's own decisions of 03:04 and stay.
+
+**Code: yes, in how the scalp was computed and shown.** From 03:26 the four rows used a rewritten copy of the scalp (`plans.find_setups('A')`). The original code (`setup_15m` and the per-sequence block) kept running underneath, but only its raw printout used it. Differences of the rewrite:
+
+| Item | Original scanner (`01d5743`) | Rewrite shown in the rows (03:26–18:00) |
+|---|---|---|
+| Output | Best candidate per coin and direction, with a full conditional plan (zone, exact 5m close, max entry, stop, TP, cancel-if, valid until, size) | Only "qualifying" rows; everything else collapsed into counts (e.g. "84 sequences: 52 invalidated…") |
+| Targets | Untaken 15m **and 1H** swings (T1) | 15m swings only (last 400 bars) |
+| Stop buffer | max(0.1% × zone edge, 0.25 × latest 15m ATR) | max(0.1% × sweep extreme, 0.25 × ATR when the setup completed) |
+| Sequences | Best one per coin and direction | Every sweep in 24h |
+| Zone too far | "Watch (zone distant)" if > 3 × 1H ATR | Not applied |
+| Swept levels | All untaken swings in the 5-day window | Swings older than 400 bars ignored |
+
+**Restored (this commit):** the original code is now in `trading/scanner/scalp_original.py`, moved verbatim. Before/after output is **byte-identical** on the 03:25, 15:19 and 17:27 inputs (`trading/audit/asof_harness.py`). Statuses are added by `scalp_status.py` (R3, SL3, E1, E2, E3), and the rows by `report.py`. The 1H plan keeps its own code (`plans.find_setups('B')`).
+
+**Effect on 11 Nov (as-of replay of the restored scanner every 5 minutes, 00:00–19:55, `replay_original_asof.py`):**
+- At every scan time the user ran (03:25, 05:03, 14:37, 15:19, 16:27, 17:27), the restored scalp also finds **no qualifying 1H-aligned setup**. At 03:25 both versions show the same NEAR countertrend WAIT FOR TRIGGER (max entry 3.5910 restored vs 3.5923 rewrite).
+- Between scans, two 1H-aligned scalp plans existed that the user never saw. **Neither produced an entry:**
+  - AAVE short: WAIT FOR TRIGGER from 02:15, zone touched 02:30, no 5m confirmation, zone filled by 02:45.
+  - BCH short: WAIT FOR TRIGGER from 07:00 (net R 6.6 from mid-zone), zone touched 07:30, no 5m confirmation, failed 2:1 at 07:45 after the target moved, zone filled by 08:00. It also sat inside the 07:45–08:15 window.
+- 5m confirmations that did close, both beyond the worst fill (so MISSED):
+  - XRP countertrend long, 03:05, close 1.0612 vs max entry 1.0523.
+  - XMR long, 16:30, close 588.60 vs max entry 584.94.
+- The 1H plan had no qualifying setup at any 5-minute step.
+
+**Conclusion:** the rewrite changed what was displayed (conditional plans hidden) and two calculations (targets, stop buffer). It did **not** remove a qualifying setup at any time on 11 Nov. Zero entries is what the original rules give on this data.
