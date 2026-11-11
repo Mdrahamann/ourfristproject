@@ -1,0 +1,8 @@
+{"BTCUSDT":["BTC-USD",1,"shortlisted"],"ETHUSDT":["ETH-USD",1,"shortlisted"],"ZECUSDT":["ZEC-USD",1,"shortlisted"],"SOLUSDT":["SOL-USD",1,"shortlisted"],
+ "XRPUSDT":["XRP-USD",1,"shortlisted"],"HYPEUSDT":["HYPE32196-USD",1,"shortlisted"],"NEARUSDT":["NEAR-USD",1,"shortlisted"],"DOGEUSDT":["DOGE-USD",1,"shortlisted"],
+ "BNBUSDT":["BNB-USD",1,"shortlisted"],"UNIUSDT":["UNI7083-USD",1,"shortlisted"],"ENAUSDT":["ENA-USD",1,"shortlisted"],"SUIUSDT":["SUI20947-USD",1,"shortlisted"],
+ "AVAXUSDT":["AVAX-USD",1,"shortlisted"],"AAVEUSDT":["AAVE-USD",1,"shortlisted"],"XMRUSDT":["XMR-USD",1,"shortlisted"],"TRXUSDT":["TRX-USD",1,"shortlisted"],
+ "LTCUSDT":["LTC-USD",1,"shortlisted"],"LINKUSDT":["LINK-USD",1,"shortlisted"],"WLDUSDT":["WLD-USD",1,"shortlisted"],"TAOUSDT":["TAO22974-USD",1,"shortlisted"],
+ "BCHUSDT":["BCH-USD",1,"shortlisted"],
+ "1000PEPEUSDT":["PEPE24478-USD",1000,"dropped by price-rounding bug after 05:03"],"PUMPUSDT":["PUMP29835-USD",1,"dropped by price-rounding bug"],
+ "INITUSDT":["INIT-USD",1,"failed L1 liquidity"],"OPGUSDT":["OPG-USD",1,"failed L1 / not top-20 volume"],"AGTUSDT":["AGT-USD",1,"failed L1 liquidity"],"ARIAUSDT":["ARIA-USD",1,"failed L1 liquidity"]}
