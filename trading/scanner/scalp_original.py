@@ -98,7 +98,7 @@ def htf_context(rows, n, sec):
     lastL = max((s for s in known if s['kind'] == 'L'), key=lambda s: s['t'], default=None)
     return dict(bias=r['last_dir'], last_break=last, lastH=lastH, lastL=lastL)
 
-def setup_15m(r15, rows15, r5, rows5, sec15):
+def setup_15m(r15, rows15, r5, rows5, sec15, keep=()):
     """For each direction, evaluate every sweep in the last 96 bars (24h) and keep the best sequence:
     a live complete sequence (Candidate) > a live partial one (Watch) > the latest invalidated one."""
     ev = r15['events']; res = []
@@ -115,13 +115,17 @@ def setup_15m(r15, rows15, r5, rows5, sec15):
             rank = (0 if inval else (2 if (brk and disp and live_fv) else 1), s['i'])
             seqs.append((rank, dict(dir=d, sweep=s, brk=brk, disp=disp, fvgs=fv, invalidated=inval)))
         if seqs: res.append(max(seqs, key=lambda z: z[0])[1])
+        # ADDED 12 Nov (only when `keep` is given): a sequence already shown to the user keeps being tracked until
+        # its own cancel condition, even if a newer sweep on the same coin becomes the "best" one. Default: unchanged.
+        if seqs and keep:
+            res += [z[1] for z in seqs if z[1]['sweep']['t'] in keep and z[1] is not res[-1]]
     return res
 
 def confirm_5m(r5, d, after_t):
     return next((e for e in r5['events'] if e['ev'] in ('BOS', 'CHoCH') and e['dir'] == d and e['t'] >= after_t), None)
 
 
-def scalp_sequences(m15, m5, h1, bias1h, spread, now, r15=None, r5=None):
+def scalp_sequences(m15, m5, h1, bias1h, spread, now, r15=None, r5=None, keep=()):
     """Original 15m/5m scalp for one contract: at most one sequence per direction (best live one), with the
     original zone, 5m trigger reference, stop, targets (untaken 15m AND 1H swings), net R and worst fill."""
     NOW = now
@@ -131,7 +135,7 @@ def scalp_sequences(m15, m5, h1, bias1h, spread, now, r15=None, r5=None):
     item = {'last15': m15[-1][4], 'ctx1h': {'bias': bias1h}}
     x = {'spread': spread}
     seqs = []
-    for s in setup_15m(r15, m15, r5, m5, 900):
+    for s in setup_15m(r15, m15, r5, m5, 900, keep):
         sw = s['sweep']; fv = [f for f in s['fvgs'] if not f['filled']]
         out = dict(dir=s['dir'], sweep=dict(level=sw['level'], swing_t=ukd(sw['swing_t']), swing_known=ukd(sw['swing_known']), bar=ukd(sw['t']), extreme=sw['extreme']),
                    brk=dict(kind=s['brk']['ev'], level=s['brk']['level'], swing_t=ukd(s['brk']['swing_t']), swing_known=ukd(s['brk']['swing_known']), bar=ukd(s['brk']['t']), close=s['brk']['close']) if s['brk'] else None,

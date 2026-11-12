@@ -226,12 +226,23 @@ Until these are defined they are **excluded from automated checks**.
 | Separate 1H plan — 1H setup, 15m confirmation | Long |
 | Separate 1H plan — 1H setup, 15m confirmation | Short |
 
+**"What do I do now?" summary** `[LOCKED 12 Nov]`: printed **above** the four rows on every scan, readable in a few seconds, in plain English. The detailed table stays underneath for understanding the setup.
+- One card per live setup, titled `<COIN> long — WAIT`, `— READY NOW` or `— CANCELLED` (shorts the same; countertrend adds "(countertrend, half risk)").
+- **WAIT, setup not complete yet** (only the structure break is missing):
+  1. the exact setup-TF candle **close** needed (level and "by" deadline); a quick move past the level during the candle doesn't count;
+  2. the retest zone; after the break, the exact confirmation candle close is given; a touch of the zone alone is still WAIT;
+  3. cancel conditions (no close by the deadline, a close beyond the sweep extreme, price trading through the zone).
+- **WAIT, setup complete:** the zone, the exact confirmation close (TF, level, swing time), the entry limits, stop-loss, target, cancel conditions and expiry.
+- **READY NOW** (only when §16 passes): entry range, stop-loss, target and expiry **together** in one table. If the confirmation closed but only proxy data is available, the card says "CONFIRMED on stand-in prices (not READY NOW)" with the same table.
+- **CANCELLED:** any setup shown on the previous scan that is no longer live, with the plain reason.
+- No live setup: "Nothing to do — WAIT." At most 3 cards; any others are listed by name.
+
 - Each row shows the best qualifying setup with its conditional entry plan, **including the exact candle close being waited for** (TF, direction, level, and the swing it comes from).
 - **An empty row always says which case it is:**
   - `Checked N of M: no qualifying setup`, plus the closest setup, its chart evidence (swing, sweep, break, price gap, retest, confirmation close) and the first rule that blocked it, with the value or time; or
   - `Not evaluated: no usable candle data` (and every contract that couldn't be evaluated is listed under Data).
 - If one plan has no qualifying setup, the other plan's results are still shown. Both directions are checked in both plans on every scan.
-- **The original scalp is computed by the original scanner code, unchanged** (`trading/scanner/scalp_original.py`, moved verbatim from `smc_scan.py` at commit `01d5743`). Status labels and conditional plans are added on top by `scalp_status.py`, using the existing rules R3, SL3, E1, E2 and E3. The separate rewrite used for "Plan A" between 03:26 and 18:00 on 11 Nov is retired.
+- **The original scalp is computed by the original scanner code, unchanged** (`trading/scanner/scalp_original.py`, moved verbatim from `smc_scan.py` at commit `01d5743`). Status labels and conditional plans are added on top by `scalp_status.py`, using the existing rules R3, SL3, E1, E2 and E3. The separate rewrite used for "Plan A" between 03:26 and 18:00 on 11 Nov is retired. One addition (12 Nov): a setup already shown to you keeps being tracked until one of its own cancel conditions happens, even if a newer sweep on the same coin becomes the latest sequence; with nothing tracked, the output is identical to the original.
 
 **Countertrend paper group:** setups against the 1H trend (scalp) or the 4H trend (1H plan) are shown in a separate table directly under the four rows, at **half risk**, for both directions of both plans.
 

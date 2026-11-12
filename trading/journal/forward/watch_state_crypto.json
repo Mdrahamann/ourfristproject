@@ -1,0 +1,18 @@
+{
+ "scalp|SOLUSDT|bull|11 Nov 23:00": {
+  "plan": "scalp",
+  "dir": "bull",
+  "title": "SOL long \u2014 WAIT",
+  "kind": "break",
+  "level": 83.75,
+  "deadline": 1794453300.0
+ },
+ "scalp|AVAXUSDT|bull|11 Nov 23:00": {
+  "plan": "scalp",
+  "dir": "bull",
+  "title": "AVAX long \u2014 WAIT",
+  "kind": "break",
+  "level": 8.607000350952148,
+  "deadline": 1794453300.0
+ }
+}

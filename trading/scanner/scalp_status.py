@@ -59,6 +59,15 @@ def label(s, m5, m15, h1, sw15, now):
     if st != 'Candidate':
         miss = ['structure break' if m == 'BOS/CHoCH' else 'strong candle' if m == 'displacement' else 'unfilled price gap (none, or filled)' for m in s['missing']]
         s['plan_status'], s['block'] = 'Watch', 'missing ' + ', '.join(miss)
+        # one step away: sweep + strong candle + price gap exist, only the 15m break is missing, still inside 16 bars
+        if s['missing'] == ['BOS/CHoCH'] and s.get('fvg') and s.get('disp'):
+            deadline = ts(s['sweep']['bar'], now) + 17 * 900          # close of the 16th 15m bar after the sweep bar
+            known = [w for w in sw15 if w['kind'] == ('H' if bull else 'L') and w['known_at'] <= now]
+            if known and deadline > now:
+                w = max(known, key=lambda w: w['known_at'])            # the swing the original scanner breaks against
+                done = any((bull and r[4] > w['price']) or (not bull and r[4] < w['price'])
+                           for r in m15 if r[0] >= w['known_at'] and r[0] + 900 <= now)
+                s['watch_break'] = dict(level=w['price'], swing_t=w['t'], deadline=deadline, needs_new_swing=done)
         return s
     W, lo, hi = s.get('worst_fill'), f['lo'], f['hi']
     if not s.get('targets'):
@@ -107,3 +116,18 @@ RANK = {'CONFIRMED (in entry window)': 0, 'CONFIRMED (needs pullback to worst fi
         'MISSED (entry window passed)': 4, 'MISSED (confirmation beyond worst fill)': 5, 'MISSED (TP1 reached before entry)': 6,
         'Fails 2:1 net': 7, 'Stop too tight': 8, 'No untaken target': 9, 'Conflict': 10, 'Expired': 11, 'Watch (zone distant)': 12,
         'Watch': 13, 'Invalidated': 14}
+
+
+def tracked(state_path, sym, now):
+    """Sweep bar times of scalp setups shown on the previous scan for this contract (so they keep being tracked)."""
+    import json, os
+    if not state_path or os.environ.get('SCAN_NO_STATE') or not os.path.exists(state_path): return set()
+    try: st = json.load(open(state_path))
+    except Exception: return set()
+    out = set()
+    for k in st:
+        plan, s, d, t = k.split('|', 3)
+        if plan == 'scalp' and s == sym:
+            try: out.add(ts(t, now))
+            except ValueError: pass
+    return out

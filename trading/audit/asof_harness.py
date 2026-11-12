@@ -5,7 +5,7 @@
 * CoinGecko: rebuilt from the per-symbol values (price, index, OI, spread, funding, 24h volume/change) that the
   nearest saved scan logged. The raw CoinGecko snapshot was NOT saved per scan, so liquidity is approximate.
 Usage: python3 asof_harness.py SCRIPT OUTDIR 'YYYY-MM-DD HH:MM:SS' CG_JSON CACHE_DIR"""
-import datetime as dt, io, json, re, runpy, sys, time, urllib.request
+import datetime as dt, io, json, os, re, runpy, sys, time, urllib.request
 from contextlib import redirect_stdout
 from zoneinfo import ZoneInfo
 
@@ -42,6 +42,8 @@ def run(script, out, T, cg_list, cache_dir, quiet=True):
     bo = urllib.request.build_opener
     urllib.request.build_opener = lambda *a, **k: Opener()
     time.time = lambda: T
+    if not os.environ.get('SCAN_STATE_DIR'):
+        os.environ['SCAN_NO_STATE'] = '1'      # never touch the live watch state from a replay
     argv = sys.argv
     sys.argv = [script, out]
     buf = io.StringIO()

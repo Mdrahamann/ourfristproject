@@ -51,7 +51,8 @@ def from_scalp(sym, s):
                 disp=(f"strong candle {s['disp']}" if s.get('disp') else 'no strong candle'),
                 gap=(f"price gap {g(f['lo'])}–{g(f['hi'])} (known {f['known_at']}), {'touched ' + f['touched'] if f.get('touched') else 'not touched'}" if f else 'no unfilled price gap'),
                 t_sort=s['sweep']['bar'], risk_pct=s.get('risk_pct'), cost_R=s.get('cost_R'), ce=s.get('entry_ce'),
-                extreme=s['sweep']['extreme'])
+                extreme=s['sweep']['extreme'], missing=s.get('missing') or [], watch=s.get('watch_break'),
+                conf=s.get('confirm5m'), t_conf=s.get('t_conf'), trig=(ref or {}).get('price'), trig_t=(ref or {}).get('swing_t'))
 
 
 def from_1h(r):
@@ -85,7 +86,9 @@ def from_1h(r):
                 disp=(f"strong candle {hm(d['t'])}" if d else 'no strong candle'),
                 gap=(f"price gap {g(z[0])}–{g(z[1])} (known {hm(r['zone_known'])}), {'touched ' + hm(r['touched']) if r.get('touched') else 'not touched'}" if z else 'no price gap'),
                 t_sort=s['t'], risk_pct=(abs(r['ce'] - r['stop']) / r['ce'] * 100) if r.get('ce') else None,
-                cost_R=None, ce=r.get('ce'), extreme=s['extreme'], costs=r.get('costs'))
+                cost_R=None, ce=r.get('ce'), extreme=s['extreme'], costs=r.get('costs'), missing=r.get('missing') or [],
+                watch=None, conf=c, t_conf=(c or {}).get('t'), trig=(ref or {}).get('price'),
+                trig_t=hm(ref['swing_t']) if ref else None, tp1_first=r.get('tp1_first'))
 
 
 def pick(rows, d, group):
@@ -147,13 +150,161 @@ def plan_block(label, r):
     return '\n'.join(L)
 
 
-def render(scalp_items, oneh_records, breadth, data_lines, unit='coins'):
+# ---------- "What do I do now?" summary (CLAUDE.md §18) ----------
+def tparse(s, now):
+    return s if isinstance(s, (int, float)) else dt.datetime.strptime(f"{dt.datetime.fromtimestamp(now, UK).year} {s}", '%Y %d %b %H:%M').replace(tzinfo=UK).timestamp()
+
+
+def when(s, now):
+    """'dd Mon HH:MM' (or a timestamp) -> '03:15 UK' today, else 'Fri 13 Nov 03:15 UK'."""
+    if s is None: return '—'
+    t = tparse(s, now)
+    d, n = dt.datetime.fromtimestamp(t, UK), dt.datetime.fromtimestamp(now, UK)
+    return d.strftime('%H:%M UK') if d.date() == n.date() else d.strftime('%a %d %b %H:%M UK')
+
+
+def name(r):
+    ct = ' (countertrend, half risk)' if r['group'] != 'main' else ''
+    return f"{r['sym'][:-4] if r['sym'].endswith('USDT') else r['sym']} {'long' if r['dir'] == 'bull' else 'short'}{ct}"
+
+
+def key(r):
+    return f"{r['plan']}|{r['sym']}|{r['dir']}|{r['t_sort']}"
+
+
+def tfw(r):
+    return ('15-minute', '5-minute') if r['plan'] == 'scalp' else ('1-hour', '15-minute')
+
+
+def entry_range(r):
+    lo, hi = r['zone']
+    return (min(lo, r['worst']), r['worst']) if r['dir'] == 'bull' else (r['worst'], max(hi, r['worst']))
+
+
+def card(r, now, ready_now_ok):
+    """Plain-English steps for one live setup. Returns (title, lines, state)."""
+    bull = r['dir'] == 'bull'
+    up, dn = ('above', 'below') if bull else ('below', 'above')
+    hl = 'high' if bull else 'low'
+    big, small = tfw(r)
+    st = r['status']
+    lo, hi = r['zone']
+    far = lo if bull else hi                                     # price trading past this fills the gap
+    if r.get('watch'):
+        w = r['watch']
+        first = (f"First, wait for a new {big} swing {hl} to form, then a {big} candle to close {up} it by {when(w['deadline'], now)}."
+                 if w['needs_new_swing'] else
+                 f"First, wait for a {big} candle to close {up} **{g(w['level'])}** by **{when(w['deadline'], now)}**. "
+                 f"A quick move {up} {g(w['level'])} during the candle doesn't count.")
+        return f"{name(r)} — WAIT", [
+            f"1. {first}",
+            f"2. If that happens, watch for a pullback to **{g(lo)}–{g(hi)}**. I'll then give you the exact {small} candle close you need before entry. "
+            f"A touch of the zone alone is still WAIT.",
+            f"3. Cancel if there's no qualifying close by {when(w['deadline'], now)}, a {big} candle closes {dn} **{g(r['extreme'])}**, "
+            f"or price trades {dn} **{g(far)}**."] + ([
+            f"Heads-up: the nearest target right now is only **{g(r['tp2'])}** (about {r['netR'][1]}R from the zone), so even after the break "
+            f"this may fail the 2:1 rule. I'll recheck the targets once the candle closes."] if r['netR'][1] is not None and r['netR'][1] < 2 else []), \
+            dict(kind='break', level=w['level'], deadline=w['deadline'])
+    e1, e2 = entry_range(r)
+    cancel = (f"Cancel if a {big} candle closes {dn} **{g(r['extreme'])}**, price reaches the first target ({g(r['tp1'])}) before entry, "
+              f"price trades {dn} **{g(far)}**, or nothing triggers by **{when(r['expiry'], now)}**.")
+    if st.startswith('CONFIRMED'):
+        c = r['conf'] or {}
+        window_end = (r['t_conf'] or now) + (300 if r['plan'] == 'scalp' else 900)
+        if st == 'CONFIRMED (in entry window)':
+            head = 'READY NOW' if ready_now_ok else 'CONFIRMED on stand-in prices (not READY NOW)'
+            lines = [f"The {small} candle closed at **{g(c.get('close'))}** at {when(r['t_conf'], now)}, {up} {g(c.get('level'))}."]
+            if not ready_now_ok:
+                lines.append("I can't see Binance's own price here, so check the Binance chart shows the same close, and your price is inside the entry range, before you act.")
+            lines += ['', '| Entry range | Stop-loss | Target | Expiry |', '|---|---|---|---|',
+                      f"| {g(e1)}–{g(e2)} (don't {'pay more' if bull else 'sell lower'} than {g(r['worst'])}) | {g(r['stop'])} | "
+                      f"{g(r['tp1'])} (take half), then {g(r['tp2'])} | {when(window_end, now)} |"]
+            return f"{name(r)} — {head}", lines, dict(kind='confirmed')
+        return f"{name(r)} — WAIT (needs a {'dip' if bull else 'bounce'} to {g(r['worst'])})", [
+            f"1. The {small} candle closed at **{g(c.get('close'))}** at {when(r['t_conf'], now)}, {up} {g(c.get('level'))}, "
+            f"but that's {'above' if bull else 'below'} your maximum entry **{g(r['worst'])}**.",
+            f"2. Only enter if price comes back to **{g(r['worst'])}** or {'lower' if bull else 'higher'} by **{when(window_end, now)}**. Otherwise it's CANCELLED (missed).",
+            f"3. Stop-loss {g(r['stop'])}; target {g(r['tp1'])}, then {g(r['tp2'])}."], dict(kind='confirmed')
+    step1 = (f"1. Price is already in the zone **{g(lo)}–{g(hi)}** (touched {when(r['touched'], now)})."
+             if r['touched'] else f"1. Wait for a pullback into **{g(lo)}–{g(hi)}**.")
+    trig = (f"2. Then wait for a {small} candle to **close {up} {g(r['trig'])}** (the last confirmed {small} swing {hl}, from {when(r['trig_t'], now)}). "
+            f"A quick move {up} it during the candle doesn't count, and a touch of the zone alone is still WAIT. "
+            f"If a new, {'lower' if bull else 'higher'} {small} swing {hl} forms during the pullback, the level moves to it." if r.get('trig') else
+            f"2. Then wait for a {small} candle to close {up} the last confirmed {small} swing {hl} (none has formed yet).")
+    return f"{name(r)} — WAIT", [step1, trig,
+                                 f"3. Enter only between **{g(e1)} and {g(e2)}**; {'above' if bull else 'below'} {g(r['worst'])} it doesn't give 2:1 after costs. "
+                                 f"Stop-loss {g(r['stop'])}; target {g(r['tp1'])}, then {g(r['tp2'])}.",
+                                 f"4. {cancel}"], dict(kind='trigger', expiry=r['expiry'])
+
+
+def why_cancel(p, cur, now):
+    bull = p['dir'] == 'bull'
+    up, dn = ('above', 'below') if bull else ('below', 'above')
+    big = '15-minute' if p['plan'] == 'scalp' else '1-hour'
+    if p.get('kind') == 'break' and now >= p['deadline'] and (cur is None or 'BOS/CHoCH' in (cur.get('missing') or [])):
+        return f"no {big} candle closed {up} {g(p['level'])} by {when(p['deadline'], now)}"
+    if p.get('expiry') and now > tparse(p['expiry'], now):
+        return f"nothing triggered by {when(p['expiry'], now)}, so the plan expired"
+    if cur is None:
+        return 'it was replaced by a newer setup on the same coin'
+    st = cur['status']
+    if st == 'Invalidated': return f"a {big} candle closed {dn} {g(cur['extreme'])}"
+    if st.startswith('Conflict'): return f"a {big} candle broke structure the other way"
+    if st == 'Expired': return f"nothing triggered before it expired ({when(cur['expiry'], now)})"
+    if st.startswith('MISSED (TP1'): return 'price reached the first target without pulling back first'
+    if st.startswith('MISSED (conf'): return f"the confirming candle closed past your maximum entry and price didn't come back ({cur['block']})"
+    if st.startswith('MISSED'): return 'the entry window passed'
+    if st == 'Fails 2:1 net': return "it no longer gives 2:1 after costs (the target is too close)"
+    if st in ('Zone filled',) or any('FVG' in m or 'gap' in m for m in (cur.get('missing') or [])):
+        return 'price traded through the zone, so the price gap filled'
+    return cur.get('block') or st
+
+
+def do_now(S, B, now, prev, ready_now_ok, closed_note=None):
+    rows = S + B
+    live = []
+    for plan_rows in (S, B):
+        for d in ('bull', 'bear'):
+            for grp in ('main', 'countertrend'):
+                best, _, _ = pick(plan_rows, d, grp)
+                if best: live.append(best)
+    live += [r for r in S if r.get('watch') and r not in live]
+    order = {'READY': 0, 'CONFIRMED': 1}
+    cards = [card(r, now, ready_now_ok) + (r,) for r in live]
+    cards.sort(key=lambda c: (order.get(c[0].split(' — ')[1].split(' ')[0], 2), bool(c[3].get('watch')), c[3]['group'] != 'main', c[3]['plan'] != 'scalp'))
+    state = {key(r): dict(plan=r['plan'], dir=r['dir'], title=t, **extra) for t, _, extra, r in cards}
+    cur = {key(r): r for r in rows}
+    gone = [(p, why_cancel(p, cur.get(k), now)) for k, p in (prev or {}).items() if k not in state]
+    out = ['## What do I do now?', '']
+    if closed_note: out += [closed_note, '']
+    for p, why in gone:
+        out += [f"**{p['title'].split(' — ')[0]} — CANCELLED**: {why}.", '']
+    for t, lines, _, _ in cards[:3]:
+        out += [f'**{t}**', ''] + lines + ['']
+    if len(cards) > 3: out += ['Also on watch: ' + '; '.join(c[0] for c in cards[3:]) + '.', '']
+    if not cards and not gone:
+        out += ['**Nothing to do — WAIT.** No setup is close in either plan, longs or shorts.', '']
+    out += ['---', '']
+    return out, state
+
+
+def render(scalp_items, oneh_records, breadth, data_lines, unit='coins', now=None, state_path=None, ready_now_ok=False, closed_note=None):
+    import json, os, time
+    now = now or time.time()
     ok = [it for it in scalp_items if it.get('status') == 'ok']
     n_ok, n_total = len(ok), len(scalp_items)
     S = [from_scalp(it['sym'], s) for it in ok for s in it.get('seqs', [])]
     B = [from_1h(r) for r in oneh_records]
-    out = ['| Plan | Direction | Result | Exact candle close needed | Entry range (zone edge → max entry) | Stop | TP1 / TP2 | Net R (mid) | Valid until |',
-           '|---|---|---|---|---|---|---|---|---|']
+    prev = {}
+    if state_path and os.path.exists(state_path) and not os.environ.get('SCAN_NO_STATE'):
+        try: prev = json.load(open(state_path))
+        except Exception: prev = {}
+    summary, state = do_now(S, B, now, prev, ready_now_ok, closed_note)
+    if state_path and not os.environ.get('SCAN_NO_STATE'):
+        json.dump(state, open(state_path, 'w'), indent=1, default=str)
+    out = summary + ['**Detailed table**', '',
+                     '| Plan | Direction | Result | Exact candle close needed | Entry range (zone edge → max entry) | Stop | TP1 / TP2 | Net R (mid) | Valid until |',
+                     '|---|---|---|---|---|---|---|---|---|']
     shown, closest = [], []
     for label, rows, d, lb in ((SCALP, S, 'bull', '24h'), (SCALP, S, 'bear', '24h'), (ONEH, B, 'bull', '72h'), (ONEH, B, 'bear', '72h')):
         txt, r = row_text(label, d, pick(rows, d, 'main'), n_ok, n_total, unit, lb)

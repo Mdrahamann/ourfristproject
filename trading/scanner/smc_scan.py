@@ -20,7 +20,8 @@ import json, os, sys, time, urllib.request, datetime as dt
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from smc_core import worst_fill  # noqa: E402
 from plans import find_setups  # noqa: E402  (separate 1H plan only)
-from scalp_status import label  # noqa: E402
+from scalp_status import label, tracked  # noqa: E402
+STATE = os.path.join(os.environ.get('SCAN_STATE_DIR') or os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'journal', 'forward'), 'watch_state_crypto.json')
 from report import render  # noqa: E402
 PLAN_SETUPS = []
 from zoneinfo import ZoneInfo
@@ -129,7 +130,8 @@ for x in short:
     for rr in find_setups('B', h1, m15, item['ctx4h']['bias'], m15[-1][4], costs_, NOW):   # separate 1H plan
         rr['sym'] = x['symbol']; rr['costs'] = costs_; PLAN_SETUPS.append(rr)
     item['atr15'] = a15; item['last15'] = m15[-1][4]
-    seqs = scalp_sequences(m15, m5, h1, item['ctx1h']['bias'], x.get('spread'), NOW, r15, r5)   # original scalp, unchanged
+    seqs = scalp_sequences(m15, m5, h1, item['ctx1h']['bias'], x.get('spread'), NOW, r15, r5,
+                           keep=tracked(STATE, x['symbol'], NOW))   # original scalp, unchanged (+ plans already shown)
     for s_ in seqs: label(s_, m5, m15, h1, r15['swings'], NOW)                                 # status + conditional plan
     item['seqs'] = seqs; item['status'] = 'ok'
     # keep a little raw context for the report
@@ -154,7 +156,8 @@ if noprice_liquid:
                 f"{len(noprice_liquid)} of them would pass liquidity: " + ', '.join(f"{x['symbol']} (${(x.get('volume_24h') or 0) / 1e6:.0f}M vol)" for x in noprice_liquid[:5])
                 + '. Fix pending your approval.')
 DATA.append('- News blackouts (N1–N6) are not coded in the scanner; the calendar is unverified, so check news times yourself.')
-FOUR_ROWS = render(report['symbols'], PLAN_SETUPS, breadth, DATA)
+FOUR_ROWS = render(report['symbols'], PLAN_SETUPS, breadth, DATA, now=NOW,
+                   state_path=STATE)
 report['plans'] = PLAN_SETUPS; report['four_rows_md'] = FOUR_ROWS
 report['not_screened_price0'] = [x['symbol'] for x in noprice]
 open(f'{OUT}/scan.md', 'w').write(f"# Scan {report['scan_time_uk']}\n\n" + FOUR_ROWS + "\n")
