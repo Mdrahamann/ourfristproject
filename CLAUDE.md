@@ -15,6 +15,18 @@ All times are UK time (`Europe/London`, which handles GMT and BST).
 | `[PROPOSED]` | A threshold I am proposing. **Needs your approval** |
 | `[UNRESOLVED]` | I cannot infer it from your system. **Needs your decision** |
 
+### Routine scans: keep usage low `[LOCKED 12 Nov]`
+- **`scan now`** → run once, from the repository root: `python3 trading/scanner/scan.py`. Reply with the **short result only**:
+  - the status table (original 15m/5m scalp first, separate 1H/15m plan second, Long and Short for each, with the status and the exact price or candle close being waited for);
+  - the "What do I do now?" cards;
+  - **one line** on data. If live contract data is unavailable, say so in that line and still show any useful watchlist result.
+- **Routine scans skip** repository reviews, code edits, backtests and commits. `scan.py` appends the journal row itself, to the local file only.
+- **If the command fails**, show its error output and stop. Fixing it is a separate request.
+- **`full scan`** → `python3 trading/scanner/scan.py --full` (full tables and chart evidence).
+- **`audit scan`** → the full scan plus coverage and data checks: what wasn't screened or evaluated, and why.
+- **`scan <SYMBOL>`** → `python3 trading/scanner/scan.py --symbol <SYMBOL>`. Works for any Binance USDT perp, and for the stock-linked list in `trading/scanner/cli.py`.
+- Stock-linked contracts are included automatically while the US market is open; `--stocks` forces them.
+
 ### Decisions locked on 11 Nov 2026 (v0.2). These override anything below
 1. **Capital first.**
    - Risk up to **0.25% of the starting account balance** per trade (main group), or **0.125%** (countertrend group).

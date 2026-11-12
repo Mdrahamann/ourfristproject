@@ -27,8 +27,9 @@ PLAN_SETUPS = []
 from zoneinfo import ZoneInfo
 
 UK = ZoneInfo('Europe/London'); UTC = dt.timezone.utc
-OUT = sys.argv[1]; os.makedirs(OUT, exist_ok=True)
-OPEN = urllib.request.build_opener(urllib.request.ProxyHandler({'https': os.environ['HTTPS_PROXY']}))
+from cli import parse, summary_of  # noqa: E402
+OUT, SYMBOL, QUIET = parse(sys.argv[1:], 'crypto')   # [OUTDIR] [--symbol AVAX] [--quiet]
+OPEN = urllib.request.build_opener()   # uses HTTPS_PROXY from the environment only if one is set
 
 # ---- assumptions (stated in the report) ----
 FEE_TAKER = 0.0005      # Binance USDT-M VIP0 taker, per side, no BNB discount (assumption)
@@ -72,6 +73,10 @@ for x in gainers + losers:                      # L2: top-20 volume + top-5 gain
     if x not in short and len(short) < 30: short.append(x)
 for x in sorted([x for x in crypto if not liq_reason(x)], key=lambda x: -x['volume_24h']):
     if x not in short and len(short) < 20: short.append(x)   # fill to 20 with remaining liquid contracts when available
+if SYMBOL:                                     # single-contract check: analyse it whatever the shortlist says
+    hit = [x for x in cg if x.get('market') == 'Binance (Futures)' and x.get('contract_type') == 'perpetual' and x.get('symbol') == SYMBOL]
+    if not hit: sys.exit(f'{SYMBOL}: not found among Binance USDT perpetuals in the CoinGecko snapshot')
+    short, rejected = hit[:1], []
 
 # ---------------- candles ----------------
 def yahoo(sym, interval, rng, sec):
@@ -156,12 +161,24 @@ if noprice_liquid:
                 f"{len(noprice_liquid)} of them would pass liquidity: " + ', '.join(f"{x['symbol']} (${(x.get('volume_24h') or 0) / 1e6:.0f}M vol)" for x in noprice_liquid[:5])
                 + '. Fix pending your approval.')
 DATA.append('- News blackouts (N1–N6) are not coded in the scanner; the calendar is unverified, so check news times yourself.')
+if SYMBOL:
+    lr = liq_reason(short[0])
+    DATA.insert(0, f"**Single-contract check: {SYMBOL}.** Liquidity: " + ('passes L1.' if not lr else 'FAILS L1 (' + '; '.join(lr) + '), so it would not be on the normal shortlist.'))
 FOUR_ROWS = render(report['symbols'], PLAN_SETUPS, breadth, DATA, now=NOW,
-                   state_path=STATE)
+                   state_path=STATE, save_state=not SYMBOL, only_sym=SYMBOL)
 report['plans'] = PLAN_SETUPS; report['four_rows_md'] = FOUR_ROWS
 report['not_screened_price0'] = [x['symbol'] for x in noprice]
 open(f'{OUT}/scan.md', 'w').write(f"# Scan {report['scan_time_uk']}\n\n" + FOUR_ROWS + "\n")
+ONE_LINE = (f"Data: {'single-contract check ' + SYMBOL + '; ' if SYMBOL else ''}{report['n_crypto']} perps screened → {len(short)} shortlisted → {len(okk)} analysed. "
+            f"Yahoo spot candles stand in for Binance (CoinGecko snapshot {report['coingecko_lag_min']} min old). "
+            "READY NOW unavailable — no live Binance contract data; levels approximate."
+            + (' Not evaluated: ' + ', '.join(it['sym'] for it in report['symbols'] if it.get('status') != 'ok') + '.' if unavail else '')
+            + (' Not screened (price 0.00 in snapshot): ' + ', '.join(x['symbol'] for x in noprice_liquid[:3]) + '.' if noprice_liquid and not SYMBOL else ''))
+if SYMBOL: ONE_LINE = DATA[0] + ' ' + ONE_LINE
+open(f'{OUT}/short.md', 'w').write(summary_of(FOUR_ROWS).rstrip() + '\n\n' + ONE_LINE + '\n')
+report['one_line'] = ONE_LINE
 json.dump(report, open(f'{OUT}/scan.json', 'w'), indent=1, default=str)
+if QUIET: sys.exit(0)
 print(FOUR_ROWS)
 print()
 print('scan', report['scan_time_uk'], '| CoinGecko as of', report['coingecko_asof_uk'], f"({report['coingecko_lag_min']} min old)")

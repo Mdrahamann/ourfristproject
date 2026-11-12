@@ -260,6 +260,37 @@ def why_cancel(p, cur, now):
     return cur.get('block') or st
 
 
+def waiting_for(r, now):
+    bull = r['dir'] == 'bull'
+    up = 'above' if bull else 'below'
+    big, small = tfw(r)
+    if r.get('watch'):
+        return f"{big} close {up} **{g(r['watch']['level'])}** by {when(r['watch']['deadline'], now)}"
+    st, (lo, hi) = r['status'], r['zone']
+    if st == 'WAIT FOR TRIGGER':
+        return f"pullback to **{g(lo)}–{g(hi)}**, then a {small} close {up} **{g(r['trig'])}**" if r.get('trig') else f"pullback to {g(lo)}–{g(hi)}"
+    if st == 'WAIT FOR TRIGGER (in zone)':
+        return f"{small} close {up} **{g(r['trig'])}** (price is in the zone)" if r.get('trig') else f"a {small} swing to confirm against"
+    e1, e2 = entry_range(r)
+    end = when((r['t_conf'] or now) + (300 if r['plan'] == 'scalp' else 900), now)
+    if st == 'CONFIRMED (in entry window)':
+        return f"entry **{g(e1)}–{g(e2)}** until {end}; stop {g(r['stop'])}; target {g(r['tp1'])}"
+    return f"a {'dip' if bull else 'bounce'} to **{g(r['worst'])}** by {end}"
+
+
+def status_table(cards, ready_now_ok):
+    out = ['| Plan | Direction | Status | Waiting for |', '|---|---|---|---|']
+    for plan, label in (('scalp', 'Original scalp (15m setup, 5m close)'), ('1h', 'Separate 1H plan (1H setup, 15m close)')):
+        for d in ('bull', 'bear'):
+            mine = [c for c in cards if c[3]['plan'] == plan and c[3]['dir'] == d]
+            if not mine:
+                out.append(f"| {label} | {side(d)} | No setup | nothing close yet |"); continue
+            t, _, _, r = mine[0]
+            more = f" (+{len(mine) - 1} more)" if len(mine) > 1 else ''
+            out.append(f"| {label} | {side(d)} | **{t.split(' — ', 1)[1]}**: {name(r)}{more} | {r['waiting']} |")
+    return out
+
+
 def do_now(S, B, now, prev, ready_now_ok, closed_note=None):
     rows = S + B
     live = []
@@ -270,13 +301,22 @@ def do_now(S, B, now, prev, ready_now_ok, closed_note=None):
                 if best: live.append(best)
     live += [r for r in S if r.get('watch') and r not in live]
     order = {'READY': 0, 'CONFIRMED': 1}
+    for r in live: r['waiting'] = waiting_for(r, now)
     cards = [card(r, now, ready_now_ok) + (r,) for r in live]
     cards.sort(key=lambda c: (order.get(c[0].split(' — ')[1].split(' ')[0], 2), bool(c[3].get('watch')), c[3]['group'] != 'main', c[3]['plan'] != 'scalp'))
     state = {key(r): dict(plan=r['plan'], dir=r['dir'], title=t, **extra) for t, _, extra, r in cards}
     cur = {key(r): r for r in rows}
-    gone = [(p, why_cancel(p, cur.get(k), now)) for k, p in (prev or {}).items() if k not in state]
+    gone = []
+    for k, p in (prev or {}).items():
+        if k in state: continue
+        lapsed = (p.get('deadline') and now >= p['deadline']) or (p.get('expiry') and now > tparse(p['expiry'], now))
+        if k not in cur and not lapsed and p.get('misses', 0) < 1:
+            state[k] = dict(p, misses=p.get('misses', 0) + 1)       # vanished from this data pull: re-check next scan
+            continue
+        gone.append((p, why_cancel(p, cur.get(k), now) if k in cur or lapsed else 'it no longer shows up in the data (checked twice)'))
     out = ['## What do I do now?', '']
     if closed_note: out += [closed_note, '']
+    out += status_table(cards, ready_now_ok) + ['']
     for p, why in gone:
         out += [f"**{p['title'].split(' — ')[0]} — CANCELLED**: {why}.", '']
     for t, lines, _, _ in cards[:3]:
@@ -288,7 +328,8 @@ def do_now(S, B, now, prev, ready_now_ok, closed_note=None):
     return out, state
 
 
-def render(scalp_items, oneh_records, breadth, data_lines, unit='coins', now=None, state_path=None, ready_now_ok=False, closed_note=None):
+def render(scalp_items, oneh_records, breadth, data_lines, unit='coins', now=None, state_path=None, ready_now_ok=False, closed_note=None,
+           save_state=True, only_sym=None):
     import json, os, time
     now = now or time.time()
     ok = [it for it in scalp_items if it.get('status') == 'ok']
@@ -299,8 +340,9 @@ def render(scalp_items, oneh_records, breadth, data_lines, unit='coins', now=Non
     if state_path and os.path.exists(state_path) and not os.environ.get('SCAN_NO_STATE'):
         try: prev = json.load(open(state_path))
         except Exception: prev = {}
+    if only_sym: prev = {k: v for k, v in prev.items() if f'|{only_sym}|' in k}
     summary, state = do_now(S, B, now, prev, ready_now_ok, closed_note)
-    if state_path and not os.environ.get('SCAN_NO_STATE'):
+    if state_path and save_state and not os.environ.get('SCAN_NO_STATE'):
         json.dump(state, open(state_path, 'w'), indent=1, default=str)
     out = summary + ['**Detailed table**', '',
                      '| Plan | Direction | Result | Exact candle close needed | Entry range (zone edge → max entry) | Stop | TP1 / TP2 | Net R (mid) | Valid until |',
