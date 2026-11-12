@@ -14,3 +14,4 @@ scan_time_uk,scan_type,crypto_contracts_screened,crypto_liquid,crypto_analysed,s
 2026-11-12 02:33:42,scan now (original scalp + separate 1H plan; crypto),615,20,18,0,0,0,unavailable - no live Binance contract quote/candles (fapi HTTP 451),0,0,2 (AVAX long + SOL long: need 15m close above 8.607 / 83.75 by 03:15),unverified (calendar blocked; blackouts not coded),"New What do I do now? summary. TAO short cancelled 02:30 (no 15m close below 215.39). AVAX/SOL targets currently <2R (0.64R / 0.22R)"
 2026-11-12 02:47:11,scan.py,615,20,18,0,0,0,unavailable - no live Binance contract quote/candles,0,,1,unverified (blackouts not coded),AVAX long — WAIT
 2026-11-12 03:22:40,scan.py,615,20,18,0,0,0,unavailable - no live Binance contract quote/candles,0,,0,unverified (blackouts not coded),no live setup
+2026-11-12 06:31:55,scan.py,615,20,18,0,0,0,unavailable - no live Binance contract quote/candles,0,,0,unverified (blackouts not coded),no live setup
