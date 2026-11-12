@@ -1,3 +1,4 @@
 __pycache__/
 *.pyc
 trading/runs/
+graphify-out/cache/

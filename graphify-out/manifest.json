@@ -1,0 +1,320 @@
+{
+  ".claude/settings.json": {
+    "mtime": 1794497894.0097876,
+    "seen": 1794497930.5068994,
+    "ast_hash": "8eafe95f2f857d090df6c04324b234d1",
+    "semantic_hash": ""
+  },
+  ".claude/skills/trader-alerts/alerts.example.json": {
+    "mtime": 1794497846.8310964,
+    "seen": 1794497930.5069063,
+    "ast_hash": "17c210246df646a6150476d89854867e",
+    "semantic_hash": ""
+  },
+  ".claude/skills/trader-alerts/alerts.py": {
+    "mtime": 1794497846.8310964,
+    "seen": 1794497930.5069094,
+    "ast_hash": "380de25e29337c5b7fbb29938c458832",
+    "semantic_hash": ""
+  },
+  ".claude/skills/trader-analyst/facts.py": {
+    "mtime": 1794497846.8313882,
+    "seen": 1794497930.5069113,
+    "ast_hash": "6aa34127608ca2b33e0b9a4225a089e9",
+    "semantic_hash": ""
+  },
+  ".claude/skills/trader-analyst/metrics.example.json": {
+    "mtime": 1794497846.8313882,
+    "seen": 1794497930.5069125,
+    "ast_hash": "22c35a239de274f95ba67df5be6f3016",
+    "semantic_hash": ""
+  },
+  ".claude/skills/trader-broker/claude_desktop_config.example.json": {
+    "mtime": 1794497846.8316455,
+    "seen": 1794497930.5069134,
+    "ast_hash": "241a96a4157fa5f3fa379c111406973d",
+    "semantic_hash": ""
+  },
+  ".claude/skills/trader-broker/ticket.py": {
+    "mtime": 1794497846.8316455,
+    "seen": 1794497930.5069149,
+    "ast_hash": "4315855cdd89b231953f5bc5473c2603",
+    "semantic_hash": ""
+  },
+  ".claude/skills/trader-budget/config.example.json": {
+    "mtime": 1794497846.8318894,
+    "seen": 1794497930.5069158,
+    "ast_hash": "06d900c86f758f6b2a623416ef866ebc",
+    "semantic_hash": ""
+  },
+  ".claude/skills/trader-budget/size.py": {
+    "mtime": 1794497846.8318894,
+    "seen": 1794497930.5069168,
+    "ast_hash": "55827c933db7b0afd4ddc4453a482eb0",
+    "semantic_hash": ""
+  },
+  ".claude/skills/trader-budget/targets.example.json": {
+    "mtime": 1794497846.8318894,
+    "seen": 1794497930.5069182,
+    "ast_hash": "72f27e86edcd67560c48db6e8166bc0d",
+    "semantic_hash": ""
+  },
+  ".claude/skills/trader-entry/entry.py": {
+    "mtime": 1794497846.8322513,
+    "seen": 1794497930.5069194,
+    "ast_hash": "f5e503e497931a6ad43b1e4215ccaced",
+    "semantic_hash": ""
+  },
+  ".claude/skills/trader-exit/exit.py": {
+    "mtime": 1794497846.8325262,
+    "seen": 1794497930.506921,
+    "ast_hash": "d9524ece621f87ee885f9975e142f9b2",
+    "semantic_hash": ""
+  },
+  ".claude/skills/trader-news/news.py": {
+    "mtime": 1794497846.832787,
+    "seen": 1794497930.506922,
+    "ast_hash": "66cb1650e7fa3399e98481d3fb935f7e",
+    "semantic_hash": ""
+  },
+  ".claude/skills/trader-pelosi/ptr.py": {
+    "mtime": 1794497846.8330073,
+    "seen": 1794497930.506923,
+    "ast_hash": "6409c88cb6c79c4d17a298a9025d2883",
+    "semantic_hash": ""
+  },
+  ".claude/skills/trader-risk/check.py": {
+    "mtime": 1794497846.8332644,
+    "seen": 1794497930.506924,
+    "ast_hash": "4acc903191be105332ac8b2e1c08eead",
+    "semantic_hash": ""
+  },
+  ".claude/skills/trader-scanner/scan.py": {
+    "mtime": 1794497846.8335462,
+    "seen": 1794497930.5069253,
+    "ast_hash": "f54d04f65d159cc631e0657a73198927",
+    "semantic_hash": ""
+  },
+  ".claude/skills/trader-timemachine/timemachine.py": {
+    "mtime": 1794497846.8338428,
+    "seen": 1794497930.5069263,
+    "ast_hash": "b271d9e468a5a789047da73b04be4b5f",
+    "semantic_hash": ""
+  },
+  "trading/audit/asof_harness.py": {
+    "mtime": 1794497846.8344862,
+    "seen": 1794497930.5069273,
+    "ast_hash": "517c8113f97757dc6e1ff7a72bbc0a61",
+    "semantic_hash": ""
+  },
+  "trading/audit/replay_day.py": {
+    "mtime": 1794497846.8344862,
+    "seen": 1794497930.5069284,
+    "ast_hash": "f040901de8d5b0782abb16e1550b2695",
+    "semantic_hash": ""
+  },
+  "trading/audit/replay_original_asof.py": {
+    "mtime": 1794497846.8344862,
+    "seen": 1794497930.5069294,
+    "ast_hash": "c0f95973b64f903757dda8cdaf9ed4ba",
+    "semantic_hash": ""
+  },
+  "trading/audit/replay_summary.py": {
+    "mtime": 1794497846.8344862,
+    "seen": 1794497930.5069304,
+    "ast_hash": "323690aaf9d357e1ae48af074321f47e",
+    "semantic_hash": ""
+  },
+  "trading/audit/replay_universe_2026-11-11.json": {
+    "mtime": 1794497846.8344862,
+    "seen": 1794497930.5069315,
+    "ast_hash": "1248d5813ccb80ecf8bf0dec77d7394b",
+    "semantic_hash": ""
+  },
+  "trading/backtest/bt.py": {
+    "mtime": 1794497846.8344862,
+    "seen": 1794497930.5069327,
+    "ast_hash": "6ba2572044d0e0accb323bedcd651b9b",
+    "semantic_hash": ""
+  },
+  "trading/journal/forward/watch_state_crypto.json": {
+    "mtime": 1794497846.8350105,
+    "seen": 1794497930.5069337,
+    "ast_hash": "99914b932bd37a50b983c5e7c90ae93b",
+    "semantic_hash": ""
+  },
+  "trading/journal/forward/watch_state_stock.json": {
+    "mtime": 1794497846.8350105,
+    "seen": 1794497930.506935,
+    "ast_hash": "99914b932bd37a50b983c5e7c90ae93b",
+    "semantic_hash": ""
+  },
+  "trading/scanner/cli.py": {
+    "mtime": 1794497846.8351886,
+    "seen": 1794497930.5069358,
+    "ast_hash": "ad6991a5beebd0f38c3641409f493b3a",
+    "semantic_hash": ""
+  },
+  "trading/scanner/plans.py": {
+    "mtime": 1794497846.8351886,
+    "seen": 1794497930.5069368,
+    "ast_hash": "d0cf5a6b6e42df1c3af614ec3bbc9f35",
+    "semantic_hash": ""
+  },
+  "trading/scanner/report.py": {
+    "mtime": 1794497846.8351886,
+    "seen": 1794497930.5069377,
+    "ast_hash": "39f358003ca0a2aede3509dc3a0f4fc5",
+    "semantic_hash": ""
+  },
+  "trading/scanner/scalp_original.py": {
+    "mtime": 1794497846.8351886,
+    "seen": 1794497930.5069387,
+    "ast_hash": "fc222c016bf6b23176b45e5b62b7f3f5",
+    "semantic_hash": ""
+  },
+  "trading/scanner/scalp_status.py": {
+    "mtime": 1794497846.8351886,
+    "seen": 1794497930.5069396,
+    "ast_hash": "601b880e9036b8551d633cc03fcdb5b5",
+    "semantic_hash": ""
+  },
+  "trading/scanner/scan.py": {
+    "mtime": 1794497846.8351886,
+    "seen": 1794497930.5069406,
+    "ast_hash": "68269b297853bbd699f621ee67b544cc",
+    "semantic_hash": ""
+  },
+  "trading/scanner/smc_core.py": {
+    "mtime": 1794497846.8351886,
+    "seen": 1794497930.5069416,
+    "ast_hash": "72975c5e8865d13094142b8a5c550825",
+    "semantic_hash": ""
+  },
+  "trading/scanner/smc_scan.py": {
+    "mtime": 1794497846.8351886,
+    "seen": 1794497930.5069425,
+    "ast_hash": "592126893b0d4dee8e29c4068a157508",
+    "semantic_hash": ""
+  },
+  "trading/scanner/stock_scan.py": {
+    "mtime": 1794497846.8351886,
+    "seen": 1794497930.5069435,
+    "ast_hash": "7174fe5a80069858af4ef6643f124604",
+    "semantic_hash": ""
+  },
+  ".claude/skills/trader-alerts/SKILL.md": {
+    "mtime": 1794497846.831011,
+    "seen": 1794497930.5069444,
+    "ast_hash": "61b5089468b49a095b4f687d0b374798",
+    "semantic_hash": ""
+  },
+  ".claude/skills/trader-analyst/SKILL.md": {
+    "mtime": 1794497846.8310964,
+    "seen": 1794497930.5069456,
+    "ast_hash": "83a87cb3db29032572780ecbe89d11ea",
+    "semantic_hash": ""
+  },
+  ".claude/skills/trader-broker/SKILL.md": {
+    "mtime": 1794497846.8313882,
+    "seen": 1794497930.5069463,
+    "ast_hash": "135e12b6ed475829943852e2d706fe53",
+    "semantic_hash": ""
+  },
+  ".claude/skills/trader-budget/SKILL.md": {
+    "mtime": 1794497846.8316455,
+    "seen": 1794497930.5069478,
+    "ast_hash": "464e32b34c8b9deb78369c7fcb8b5659",
+    "semantic_hash": ""
+  },
+  ".claude/skills/trader-entry/SKILL.md": {
+    "mtime": 1794497846.8318894,
+    "seen": 1794497930.506949,
+    "ast_hash": "ac80743fbd0559ce9c653afd8addf425",
+    "semantic_hash": ""
+  },
+  ".claude/skills/trader-exit/SKILL.md": {
+    "mtime": 1794497846.8322513,
+    "seen": 1794497930.50695,
+    "ast_hash": "d30e61c498e8cbbd7a08558653064033",
+    "semantic_hash": ""
+  },
+  ".claude/skills/trader-news/SKILL.md": {
+    "mtime": 1794497846.8325262,
+    "seen": 1794497930.506951,
+    "ast_hash": "e291387f2cf9f7df1b99879e7a4ddcea",
+    "semantic_hash": ""
+  },
+  ".claude/skills/trader-pelosi/SKILL.md": {
+    "mtime": 1794497846.832787,
+    "seen": 1794497930.5069523,
+    "ast_hash": "b0dc4f140d291aab5ca6e4fe7761229e",
+    "semantic_hash": ""
+  },
+  ".claude/skills/trader-risk/SKILL.md": {
+    "mtime": 1794497846.8330073,
+    "seen": 1794497930.5069532,
+    "ast_hash": "a7d8996472d2c1364c6113ca7deb8c16",
+    "semantic_hash": ""
+  },
+  ".claude/skills/trader-scanner/SKILL.md": {
+    "mtime": 1794497846.8332644,
+    "seen": 1794497930.5069559,
+    "ast_hash": "78f5019d7765751f6eed6672953acac2",
+    "semantic_hash": ""
+  },
+  ".claude/skills/trader-timemachine/SKILL.md": {
+    "mtime": 1794497846.8335462,
+    "seen": 1794497930.5069568,
+    "ast_hash": "6a309c0c30d53077712674fc90f3585c",
+    "semantic_hash": ""
+  },
+  "CLAUDE.md": {
+    "mtime": 1794497894.009454,
+    "seen": 1794497930.5069578,
+    "ast_hash": "e6e8ebc048f827f6ad1d4cf6d1740b55",
+    "semantic_hash": ""
+  },
+  "trading/audit-2026-11-11.md": {
+    "mtime": 1794497846.8338428,
+    "seen": 1794497930.506959,
+    "ast_hash": "796bcbb6024b4ec5316ee3cb093497e0",
+    "semantic_hash": ""
+  },
+  "trading/audit/2026-11-11-no-entries-audit.md": {
+    "mtime": 1794497846.8343394,
+    "seen": 1794497930.50696,
+    "ast_hash": "bcc349bb49a325c3e72ebd32462414c1",
+    "semantic_hash": ""
+  },
+  "trading/backtest/results-2026-11-11.md": {
+    "mtime": 1794497846.8348043,
+    "seen": 1794497930.5069609,
+    "ast_hash": "2a43da1feece34dbff92167dccfcab87",
+    "semantic_hash": ""
+  },
+  "trading/chart-review-template.md": {
+    "mtime": 1794497846.8348043,
+    "seen": 1794497930.5069618,
+    "ast_hash": "dde6297210b19c5d902ed4ef9469b9d4",
+    "semantic_hash": ""
+  },
+  "trading/journal/2026-11-10.md": {
+    "mtime": 1794497846.8348043,
+    "seen": 1794497930.5069628,
+    "ast_hash": "b2c6976fff21038b5e9fbe8c5f5c401c",
+    "semantic_hash": ""
+  },
+  "trading/journal/forward/README.md": {
+    "mtime": 1794497846.8349683,
+    "seen": 1794497930.5069637,
+    "ast_hash": "952dd900ce2b68029041193567c6a3c6",
+    "semantic_hash": ""
+  },
+  "trading/scanner/README.md": {
+    "mtime": 1794497846.8350105,
+    "seen": 1794497930.50697,
+    "ast_hash": "bd5bc7c0f0cafed1baee57809dca765c",
+    "semantic_hash": ""
+  }
+}
