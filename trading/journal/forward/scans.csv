@@ -16,3 +16,4 @@ scan_time_uk,scan_type,crypto_contracts_screened,crypto_liquid,crypto_analysed,s
 2026-11-12 03:22:40,scan.py,615,20,18,0,0,0,unavailable - no live Binance contract quote/candles,0,,0,unverified (blackouts not coded),no live setup
 2026-11-12 06:31:55,scan.py,615,20,18,0,0,0,unavailable - no live Binance contract quote/candles,0,,0,unverified (blackouts not coded),no live setup
 2026-11-12 14:43:29,scan.py,615,20,18,26,18,0,unavailable - no live Binance contract quote/candles,0,,0,unverified (blackouts not coded),no live setup
+2026-11-12 15:14:32,scan.py,614,20,18,26,18,0,unavailable - no live Binance contract quote/candles,0,,1,unverified (blackouts not coded),GOOGL long — WAIT

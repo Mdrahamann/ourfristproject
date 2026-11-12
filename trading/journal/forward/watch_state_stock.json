@@ -1,1 +1,9 @@
-{}
+{
+ "scalp|GOOGLUSDT|bull|11 Nov 20:45": {
+  "plan": "scalp",
+  "dir": "bull",
+  "title": "GOOGL long \u2014 WAIT",
+  "kind": "trigger",
+  "expiry": "12 Nov 19:00"
+ }
+}
