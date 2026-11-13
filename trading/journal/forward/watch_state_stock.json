@@ -1,11 +1,4 @@
 {
- "scalp|AAPLUSDT|bull|12 Nov 20:45": {
-  "plan": "scalp",
-  "dir": "bull",
-  "title": "AAPL long \u2014 WAIT",
-  "kind": "trigger",
-  "expiry": "13 Nov 19:00"
- },
  "scalp|NVDAUSDT|bear|13 Nov 14:30": {
   "plan": "scalp",
   "dir": "bear",
