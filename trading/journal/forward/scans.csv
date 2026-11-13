@@ -20,3 +20,4 @@ scan_time_uk,scan_type,crypto_contracts_screened,crypto_liquid,crypto_analysed,s
 2026-11-12 15:22:38,scan.py,614,20,18,26,18,0,unavailable - no live Binance contract quote/candles,0,,0,unverified (blackouts not coded),no live setup
 2026-11-12 17:27:28,scan.py,614,20,18,26,18,0,unavailable - no live Binance contract quote/candles,0,,1,unverified (blackouts not coded),"CRCL long (countertrend, half risk) — WAIT"
 2026-11-12 19:38:52,scan.py,614,20,18,26,18,0,unavailable - no live Binance contract quote/candles,0,,0,unverified (blackouts not coded),no live setup
+2026-11-13 00:39:55,scan.py,614,20,5,0,0,0,unavailable - no live Binance contract quote/candles,0,,0,unverified (blackouts not coded),no live setup
