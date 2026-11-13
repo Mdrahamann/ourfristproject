@@ -24,3 +24,4 @@ scan_time_uk,scan_type,crypto_contracts_screened,crypto_liquid,crypto_analysed,s
 2026-11-13 04:06:55,scan.py,612,20,18,0,0,0,unavailable - no live Binance contract quote/candles,0,,0,unverified (blackouts not coded),no live setup
 2026-11-13 11:10:07,scan.py,615,20,19,0,0,0,unavailable - no live Binance contract quote/candles,0,,0,unverified (blackouts not coded),no live setup
 2026-11-13 15:18:18,scan.py,615,20,19,26,18,0,unavailable - no live Binance contract quote/candles,0,,3,unverified (blackouts not coded),"ZEC short (countertrend, half risk) — WAIT; AAPL long — WAIT; NVDA short — WAIT"
+2026-11-13 15:22:05,scan.py,615,20,19,26,18,0,unavailable - no live Binance contract quote/candles,0,,3,unverified (blackouts not coded),"ZEC short (countertrend, half risk) — WAIT; AAPL long — WAIT; NVDA short — WAIT"
