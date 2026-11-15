@@ -181,6 +181,18 @@ def entry_range(r):
     return (min(lo, r['worst']), r['worst']) if r['dir'] == 'bull' else (r['worst'], max(hi, r['worst']))
 
 
+def trigger_conflict(r):
+    """The 5m level a WAIT plan needs is already beyond its maximum entry (or its first target): a close there can't be filled."""
+    if not r.get('trig') or r.get('watch') or not r['status'].startswith('WAIT'): return None
+    bull = r['dir'] == 'bull'
+    past_w = (r['trig'] > r['worst']) if bull else (r['trig'] < r['worst'])
+    past_tp = r.get('tp1') is not None and ((r['trig'] >= r['tp1']) if bull else (r['trig'] <= r['tp1']))
+    if not (past_w or past_tp): return None
+    what = 'your maximum entry ' + g(r['worst']) + (' and the first target ' + g(r['tp1']) if past_tp else '')
+    return (f"⚠️ The 5m level it needs right now ({g(r['trig'])}) is already past {what}, so a close there can't be entered. "
+            f"It only becomes valid if a new 5m swing {'high' if bull else 'low'} forms inside the entry range; otherwise it ends as MISSED.")
+
+
 def card(r, now, ready_now_ok):
     """Plain-English steps for one live setup. Returns (title, lines, state)."""
     bull = r['dir'] == 'bull'
@@ -231,7 +243,8 @@ def card(r, now, ready_now_ok):
             f"A quick move {up} it during the candle doesn't count, and a touch of the zone alone is still WAIT. "
             f"If a new, {'lower' if bull else 'higher'} {small} swing {hl} forms during the pullback, the level moves to it." if r.get('trig') else
             f"2. Then wait for a {small} candle to close {up} the last confirmed {small} swing {hl} (none has formed yet).")
-    return f"{name(r)} — WAIT", [step1, trig,
+    conflict = trigger_conflict(r)
+    return f"{name(r)} — WAIT", [step1, trig] + ([conflict] if conflict else []) + [
                                  f"3. Enter only between **{g(e1)} and {g(e2)}**; {'above' if bull else 'below'} {g(r['worst'])} it doesn't give 2:1 after costs. "
                                  f"Stop-loss {g(r['stop'])}; target {g(r['tp1'])}, then {g(r['tp2'])}.",
                                  f"4. {cancel}"], dict(kind='trigger', expiry=r['expiry'])
@@ -301,7 +314,7 @@ def do_now(S, B, now, prev, ready_now_ok, closed_note=None):
                 if best: live.append(best)
     live += [r for r in S if r.get('watch') and r not in live]
     order = {'READY': 0, 'CONFIRMED': 1}
-    for r in live: r['waiting'] = waiting_for(r, now)
+    for r in live: r['waiting'] = waiting_for(r, now) + (' ⚠️ level past max entry' if trigger_conflict(r) else '')
     cards = [card(r, now, ready_now_ok) + (r,) for r in live]
     cards.sort(key=lambda c: (order.get(c[0].split(' — ')[1].split(' ')[0], 2), bool(c[3].get('watch')), c[3]['group'] != 'main', c[3]['plan'] != 'scalp'))
     state = {key(r): dict(plan=r['plan'], dir=r['dir'], title=t, **extra) for t, _, extra, r in cards}

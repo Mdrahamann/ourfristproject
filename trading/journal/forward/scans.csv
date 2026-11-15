@@ -28,3 +28,4 @@ scan_time_uk,scan_type,crypto_contracts_screened,crypto_liquid,crypto_analysed,s
 2026-11-13 17:14:14,scan.py,615,20,19,26,19,0,unavailable - no live Binance contract quote/candles,0,,1,unverified (blackouts not coded),NVDA short — WAIT
 2026-11-14 05:30:52,scan.py,613,20,18,0,0,0,unavailable - no live Binance contract quote/candles,0,,1,unverified (blackouts not coded),NVDA short — WAIT
 2026-11-14 14:54:13,scan.py,611,19,17,0,0,0,unavailable - no live Binance contract quote/candles,0,,1,unverified (blackouts not coded),NVDA short — WAIT
+2026-11-15 07:49:58,scan.py,690,20,18,0,0,0,unavailable - no live Binance contract quote/candles,0,,1,unverified (blackouts not coded),NVDA short — WAIT

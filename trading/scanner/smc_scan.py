@@ -52,6 +52,10 @@ NOW = time.time()
 
 # ---------------- shortlist ----------------
 cg = get_json('https://api.coingecko.com/api/v3/derivatives?include_tickers=unexpired')
+noprice = [x for x in cg if x.get('market') == 'Binance (Futures)' and x.get('contract_type') == 'perpetual'
+           and str(x.get('symbol', '')).endswith('USDT') and not float(x.get('price') or 0) > 0]   # shown as 0.00 (rounding)
+for x in noprice:                       # FIX 15 Nov: use the index price for perps whose price rounds to 0.00 (e.g. 1000PEPE, PUMP)
+    if float(x.get('index') or 0) > 0: x['price'] = str(x['index']); x['price_from_index'] = True
 allp = [x for x in cg if x.get('market') == 'Binance (Futures)' and x.get('contract_type') == 'perpetual'
         and str(x.get('symbol', '')).endswith('USDT') and float(x.get('price') or 0) > 0]
 cg_asof = max(x['last_traded_at'] for x in allp)
@@ -118,6 +122,9 @@ for x in short:
         m5 = [(t, o*scale, h*scale, l*scale, c*scale) for t, o, h, l, c in yahoo(ysym, '5m', '2d', 300)]
     except Exception as e:
         item['status'] = f'UNAVAILABLE: candle fetch failed ({str(e)[:60]})'; report['symbols'].append(item); continue
+    if h1 and m15 and m15[-1][0] + 900 > h1[-1][0] + 2 * 3600:   # FIX 15 Nov: 1H lagging, 15m current
+        extra = [r for r in resample([r for r in m15 if r[0] >= h1[-1][0] + 3600], 900, 3600) if r[0] > h1[-1][0]]
+        if extra: h1 = h1 + extra; item['h1_filled_from_15m'] = len(extra)
     h4 = resample(h1, 3600, 14400)
     stale = []
     for name, rows, sec in (('4H', h4, 14400), ('1H', h1, 3600), ('15m', m15, 900), ('5m', m5, 300)):
@@ -146,8 +153,7 @@ for x in short:
 okk = [it for it in report['symbols'] if it.get('status') == 'ok']
 breadth = dict(n=len(okk), bear=sum(it['ctx1h']['bias'] == 'bear' for it in okk), bull=sum(it['ctx1h']['bias'] == 'bull' for it in okk))
 # coverage, reported (not filtered): perps the snapshot shows with price 0.00 are never screened (original gate)
-noprice = [x for x in cg if x.get('market') == 'Binance (Futures)' and x.get('contract_type') == 'perpetual'
-           and str(x.get('symbol', '')).endswith('USDT') and not float(x.get('price') or 0) > 0]
+noprice = [x for x in noprice if not x.get('price_from_index')]
 noprice_liquid = sorted([x for x in noprice if x['symbol'][:-4] not in NONCRYPTO and not liq_reason(x)], key=lambda x: -(x.get('volume_24h') or 0))
 unavail = [f"{it['sym']} ({it['status'].split(':')[0].lower()}: {it['status'].split(':', 2)[-1].strip()[:40]})" for it in report['symbols'] if it.get('status') != 'ok']
 DATA = [f"**Data:** {report['n_crypto']} crypto USDT perps screened (CoinGecko snapshot {report['coingecko_lag_min']} min old) → "
