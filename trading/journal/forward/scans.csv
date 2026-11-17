@@ -29,3 +29,13 @@ scan_time_uk,scan_type,crypto_contracts_screened,crypto_liquid,crypto_analysed,s
 2026-11-14 05:30:52,scan.py,613,20,18,0,0,0,unavailable - no live Binance contract quote/candles,0,,1,unverified (blackouts not coded),NVDA short — WAIT
 2026-11-14 14:54:13,scan.py,611,19,17,0,0,0,unavailable - no live Binance contract quote/candles,0,,1,unverified (blackouts not coded),NVDA short — WAIT
 2026-11-15 07:49:58,scan.py,690,20,18,0,0,0,unavailable - no live Binance contract quote/candles,0,,1,unverified (blackouts not coded),NVDA short — WAIT
+2026-11-16 02:31:24,scan.py,690,19,17,0,0,0,unavailable - no live Binance contract quote/candles,0,,4,unverified (blackouts not coded),ETH long — WAIT; SOL long — WAIT; TRX short — WAIT; NVDA short — WAIT
+2026-11-16 03:38:32,scan.py,690,19,17,0,0,0,unavailable - no live Binance contract quote/candles,0,,4,unverified (blackouts not coded),ETH long — WAIT; SOL long — WAIT; TRX short — WAIT; NVDA short — WAIT
+2026-11-16 03:54:14,scan.py,690,19,17,0,0,0,unavailable - no live Binance contract quote/candles,0,,3,unverified (blackouts not coded),ETH long — WAIT; SOL long — WAIT; NVDA short — WAIT
+2026-11-16 04:52:19,scan.py,690,19,17,0,0,0,unavailable - no live Binance contract quote/candles,0,,3,unverified (blackouts not coded),ETH long — WAIT; SOL long — WAIT; NVDA short — WAIT
+2026-11-16 09:40:05,scan.py,690,19,17,0,0,0,unavailable - no live Binance contract quote/candles,0,,1,unverified (blackouts not coded),NVDA short — WAIT
+2026-11-16 14:46:52,scan.py,690,20,18,26,17,0,unavailable - no live Binance contract quote/candles,0,,1,unverified (blackouts not coded),"GOOGL short (countertrend, half risk) — WAIT"
+2026-11-17 01:48:41,scan.py,690,20,18,0,0,0,unavailable - no live Binance contract quote/candles,0,,1,unverified (blackouts not coded),"GOOGL short (countertrend, half risk) — WAIT"
+2026-11-17 14:45:47,scan.py,690,20,18,26,18,0,unavailable - no live Binance contract quote/candles,0,,1,unverified (blackouts not coded),AVAX long — WAIT
+2026-11-17 21:21:47,scan.py,690,19,17,0,0,0,unavailable - no live Binance contract quote/candles,0,,0,unverified (blackouts not coded),no live setup
+2026-11-17 21:28:58,scan.py,690,19,17,0,0,0,unavailable - no live Binance contract quote/candles,0,,0,unverified (blackouts not coded),no live setup

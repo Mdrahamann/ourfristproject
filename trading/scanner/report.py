@@ -291,20 +291,34 @@ def waiting_for(r, now):
     return f"a {'dip' if bull else 'bounce'} to **{g(r['worst'])}** by {end}"
 
 
-def status_table(cards, ready_now_ok):
+def empty_row(rows, d, coverage):
+    """§18: an empty row says which case it is (no data / checked with nothing qualifying, plus the closest and its block)."""
+    if not coverage: return 'No setup', 'nothing close yet'
+    n_ok, n_total, unit = coverage
+    if n_ok == 0: return '**Not evaluated**', f'no usable candle data (0 of {n_total} {unit})'
+    chk = f'No setup (checked {n_ok} of {n_total} {unit})'
+    best, rs, c = pick(rows, d, 'main')
+    if not rs: best, rs, c = pick(rows, d, 'countertrend')
+    if not rs: return chk, 'no sweep → strong candle → break → price gap sequence in the lookback'
+    c = c or best
+    return chk, f"closest {c['sym']}: {c['status'].lower()}" + (f" ({c['block']})" if c.get('block') else '')
+
+
+def status_table(cards, ready_now_ok, S=(), B=(), coverage=None):
     out = ['| Plan | Direction | Status | Waiting for |', '|---|---|---|---|']
     for plan, label in (('scalp', 'Original scalp (15m setup, 5m close)'), ('1h', 'Separate 1H plan (1H setup, 15m close)')):
         for d in ('bull', 'bear'):
             mine = [c for c in cards if c[3]['plan'] == plan and c[3]['dir'] == d]
             if not mine:
-                out.append(f"| {label} | {side(d)} | No setup | nothing close yet |"); continue
+                st, why = empty_row(S if plan == 'scalp' else B, d, coverage)
+                out.append(f"| {label} | {side(d)} | {st} | {why} |"); continue
             t, _, _, r = mine[0]
             more = f" (+{len(mine) - 1} more)" if len(mine) > 1 else ''
             out.append(f"| {label} | {side(d)} | **{t.split(' — ', 1)[1]}**: {name(r)}{more} | {r['waiting']} |")
     return out
 
 
-def do_now(S, B, now, prev, ready_now_ok, closed_note=None):
+def do_now(S, B, now, prev, ready_now_ok, closed_note=None, coverage=None):
     rows = S + B
     live = []
     for plan_rows in (S, B):
@@ -329,7 +343,7 @@ def do_now(S, B, now, prev, ready_now_ok, closed_note=None):
         gone.append((p, why_cancel(p, cur.get(k), now) if k in cur or lapsed else 'it no longer shows up in the data (checked twice)'))
     out = ['## What do I do now?', '']
     if closed_note: out += [closed_note, '']
-    out += status_table(cards, ready_now_ok) + ['']
+    out += status_table(cards, ready_now_ok, S, B, coverage) + ['']
     for p, why in gone:
         out += [f"**{p['title'].split(' — ')[0]} — CANCELLED**: {why}.", '']
     for t, lines, _, _ in cards[:3]:
@@ -354,7 +368,7 @@ def render(scalp_items, oneh_records, breadth, data_lines, unit='coins', now=Non
         try: prev = json.load(open(state_path))
         except Exception: prev = {}
     if only_sym: prev = {k: v for k, v in prev.items() if f'|{only_sym}|' in k}
-    summary, state = do_now(S, B, now, prev, ready_now_ok, closed_note)
+    summary, state = do_now(S, B, now, prev, ready_now_ok, closed_note, (n_ok, n_total, unit))
     if state_path and save_state and not os.environ.get('SCAN_NO_STATE'):
         json.dump(state, open(state_path, 'w'), indent=1, default=str)
     out = summary + ['**Detailed table**', '',
